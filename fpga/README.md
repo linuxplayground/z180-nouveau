@@ -61,6 +61,31 @@ hsync   60
 vsync   62
 ```
 
+## Joystick (J3) INPUT
+
+```text
+set_io             A8[0]    91
+set_io             A8[1]    93
+set_io             A8[2]    94
+set_io             A8[3]    95
+set_io             A8[4]    96
+set_io             A8[5]    97
+set_io             A8[6]    98
+set_io             A8[7]    99
+```
+
+And the mapping to IO Port A8 is as follows from z180/z180retro-lib/NABU-LIB.h
+
+```text
+typedef enum JOYSTICKENUM {
+  Joy_Left   = 0b00000100,
+  Joy_Down   = 0b01000000,
+  Joy_Right  = 0b00100000,
+  Joy_Up     = 0b10000000,
+  Joy_Button = 0b00000001,
+};
+```
+
 ## Reset Button
 
 On my particular board (due to some careless mistakes made) my FPGA Pin on S1 is
