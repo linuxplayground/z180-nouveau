@@ -493,7 +493,7 @@ uint8_t isKeyPressed(void);
 // **************************************************************************
 uint8_t getChar(void);
 
-inline uint8_t getJoyStatus();
+inline uint8_t getJoyStatus(void);
 
 // **************************************************************************
 // Read a line of text inputed by the keyboard. This does not null terminate the

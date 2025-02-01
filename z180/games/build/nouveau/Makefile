@@ -2,10 +2,8 @@ TOP=../..
 
 # Name each subdir to build before making the filesystem
 SUBDIRS=\
-	tetris
-
-RELEASEDIRS=\
-	tetris
+	tetris \
+	snake
 
 .PHONY: drive.img g.img zip_file g_burn all
 
