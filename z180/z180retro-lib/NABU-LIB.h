@@ -493,6 +493,8 @@ uint8_t isKeyPressed(void);
 // **************************************************************************
 uint8_t getChar(void);
 
+inline uint8_t getJoyStatus();
+
 // **************************************************************************
 // Read a line of text inputed by the keyboard. This does not null terminate the
 // user input. If you need the input null terminated, make the maxInputLen one byte

@@ -98,6 +98,10 @@ uint8_t getChar(void) __naked {
     __endasm;
   }
 
+uint8_t getJoyStatus(uint8_t joyNum) {
+    return ~IO_JOY0;
+}
+
 // **************************************************************************
 // VDP 
 // ---
