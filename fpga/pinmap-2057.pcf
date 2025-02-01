@@ -99,4 +99,12 @@ set_io             rgb[11] 88
 set_io              hsync   60
 set_io              vsync   62
 
-set_io		   row_last_test  101
+# JOYSTICK INTERFACE
+set_io             A8[0]    91
+set_io             A8[1]    93
+set_io             A8[2]    94
+set_io             A8[3]    95
+set_io             A8[4]    96
+set_io             A8[5]    97
+set_io             A8[6]    98
+set_io             A8[7]    99

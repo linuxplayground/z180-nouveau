@@ -48,7 +48,9 @@ module top (
     output  wire [0:11] rgb,
     output  wire        hsync,
     output  wire        vsync,
-    output  wire [7:0]  led
+    output  wire [7:0]  led,
+
+    input   wire [7:0]  A8
     );
 // CPU STUFF
     localparam RAM_START = 20'h1000;
@@ -95,6 +97,7 @@ module top (
         case (1)
         mreq_rom:       dout = rom_data;            // CPU reading boot ROM memory
         ioreq_rd_f0:    dout = ioreq_rd_f0_data;    // CPU reading gpio input
+        ioreq_rd_j3_tick: dout = ioreq_rd_j3_data;  // CPU reading joystick
         default:        dbus_out = 0;
         endcase
     end
@@ -200,9 +203,12 @@ module top (
 
     // It is not really necessary to latch this because the SD signals will be stable during a read:
     reg [7:0] ioreq_rd_f0_data;     //  = {sd_miso,sd_det,6'bx};  // data value when reading port F0
+    reg [7:0] ioreq_rd_j3_data;     //  = A8[7:0]
     always @(negedge phi) begin
         if ( ioreq_rd_f0_tick )
             ioreq_rd_f0_data <= {sd_miso,sd_det,6'bx};
+        if ( ioreq_rd_j3_tick)
+            ioreq_rd_j3_data <= A8;
     end
 
     assign sd_mosi = gpio_out[0];   // connect the GPIO output bits to the SD card pins
