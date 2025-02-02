@@ -170,7 +170,17 @@ module top (
     //
     // CPU Writes to FPGA
     always @(negedge phi) begin
-        if ( ioreq_wr_f1_tick )
+        if (~reset_n) begin
+            vdp_reg[0] = 8'd0;
+            vdp_reg[1] = 8'd0;
+            vdp_reg[2] = 8'd0;
+            vdp_reg[3] = 8'd0;
+            vdp_reg[4] = 8'd0;
+            vdp_reg[5] = 8'd0;
+            vdp_reg[6] = 8'd0;
+            vdp_reg[7] = 8'd0;
+        end
+        else if ( ioreq_wr_f1_tick )
             gpio_out <= d;                  // latch in GPIO OUT data from CPU.
 
         // Latch in the VDP Register data.  First get the register being
@@ -273,7 +283,8 @@ module top (
         .pattern_raddr(pattern_raddr),
         .pattern_rdata(pattern_rdata),
         .colour_raddr(colour_raddr),
-        .colour_rdata(colour_rdata)
+        .colour_rdata(colour_rdata),
+        .border_colour_in(vdp_reg[7][3:0])
      );
 
 endmodule

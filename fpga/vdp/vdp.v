@@ -14,7 +14,9 @@ module vdp (
     input wire [7:0] pattern_rdata,
 
     output wire [9:0] colour_raddr,
-    input wire [7:0] colour_rdata
+    input wire [7:0] colour_rdata,
+
+    input wire [3:0] border_colour_in
 );
 
     localparam HLB  = 10'd64;      // horizontal left border here to use below
@@ -64,6 +66,7 @@ module vdp (
         .pattern_rdata(pattern_rdata),
         .colour_raddr(colour_raddr),
         .colour_rdata(colour_rdata),
+        .border_colour_in(border_colour_in),
         .rgb(rgb)
     );
     assign hs = ~vdp_hsync;

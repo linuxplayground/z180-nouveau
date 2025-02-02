@@ -22,7 +22,7 @@ module tile (
     input  wire [7:0]   pattern_rdata,
     output wire [9:0]   colour_raddr,
     input  wire [7:0]   colour_rdata,
-
+    input wire [3:0]    border_colour_in,
     output wire [11:0]  rgb
     );
 
@@ -69,7 +69,7 @@ module tile (
     reg [3:0] colour_reg, colour_next;
     reg [7:0] ctc_reg, ctc_next;
 
-    reg [3:0] border_colour = 10;
+    reg [3:0] border_colour_reg;
 
     always @(posedge pxclk) begin
         if (reset) begin
@@ -80,6 +80,7 @@ module tile (
             border_reg <= 0;
             hsync_reg <= 0;
             vsync_reg <= 0;
+            border_colour_reg <= 0;
         end else begin
             colour_reg <= colour_next;
             ctc_reg <= ctc_next;
@@ -88,6 +89,7 @@ module tile (
             border_reg <= border_next;
             hsync_reg <= hsync_next;
             vsync_reg <= vsync_next;
+            border_colour_reg <= border_colour_in;
         end
     end
 
@@ -113,7 +115,7 @@ module tile (
             colour_next = px_reg[7] ? ctc_reg[7:4] : ctc_reg[3:0];
 
         if (border_reg[2])
-            colour_next = border_colour;
+            colour_next = border_colour_reg;
     end
 
     assign hsync_out   = hsync_reg[3];
