@@ -259,10 +259,11 @@ module top (
 
 
     initial begin
-        $readmemh("./vdp/rom_name_m1.hex", name_mem);
-        $readmemh("./vdp/rom_pattern.hex", pattern_mem);
+        //$readmemh("./vdp/rom_name_m1.hex", name_mem);
+        $readmemh("./vdp/rom_title_name.hex", name_mem);
+        $readmemh("./vdp/rom_title_pattern.hex", pattern_mem);
         //$readmemh("vdp/rom_colour_m2.hex", colour_mem);
-        $readmemh("./vdp/rom_colour_m1.hex", colour_mem);
+        $readmemh("./vdp/rom_title_colour.hex", colour_mem);
     end
 
     always @(posedge hwclk) begin
