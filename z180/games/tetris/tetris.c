@@ -373,19 +373,19 @@ bool menu(void) {
     vdp_waitVDPReadyInt();
     vdp_refreshViewPort();
 
-    printAtLocationBuf(13-(9/2),3, "PRESS KEY");
-    printAtLocationBuf(13-(8/2),4,"TO START");
-    printAtLocationBuf(13-(10/2),7,",(<)  LEFT");
-    printAtLocationBuf(13-(10/2),8,".(>) RIGHT");
-    printAtLocationBuf(13-(9/2),9,"X & Z ROT");
-    printAtLocationBuf(13-(10/2),10,"SPACE DROP");
+    printAtLocationBuf(8,3, "PRESS KEY");
+    printAtLocationBuf(8,4,"TO START");
+    printAtLocationBuf(8,7,",(<)  LEFT");
+    printAtLocationBuf(8,8,".(>) RIGHT");
+    printAtLocationBuf(8,9,"X & Z ROT");
+    printAtLocationBuf(8,10,"SPACE DROP");
 //    printAtLocationBuf(13-(8/2),12,"JOYSTICK");
 //    printAtLocationBuf(13-(10/2),13,"BTN ROTATE");
-    printAtLocationBuf(13-(9/2),14,"DOWN DROP");
-    printAtLocationBuf(13-(8/2),17,"ESC QUIT");
-    printAtLocationBuf(13-(10/2),19,"PRODUCTION");
-    printAtLocationBuf(13-(4/2),20,"DAVE");
-    printAtLocationBuf(13-(4/2),21,"NOUVEAU");
+    printAtLocationBuf(8,14,"DOWN DROP");
+    printAtLocationBuf(8,17,"ESC QUIT");
+    printAtLocationBuf(8,19,"PRODUCTION");
+    printAtLocationBuf(8,20,"DAVE");
+    printAtLocationBuf(8,21,"NOUVEAU");
     vdp_waitVDPReadyInt();
     vdp_refreshViewPort();
 

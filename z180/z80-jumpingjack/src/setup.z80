@@ -1,0 +1,50 @@
+;===============================================================================
+; Setups up the VDP memory and registers.
+; INPUT: void
+; OUTPUT: void
+; CLOBBERS: AF, BC, DE, HL
+;===============================================================================
+setup:
+        call    tms_clear_vram
+        call    tms_init_g1
+
+        ld      bc,tile_patterns_len
+        ld      hl,tile_patterns
+        call    tms_load_pattern_table
+
+        ;ld      bc,sprite_patterns_len
+        ;ld      hl,empty_sprite
+        ;call    tms_load_sprite_pattern_table
+
+        ld      c,tms_dark_yellow
+        call    tms_set_backdrop_color
+
+        ld      bc,color_table_data_len
+        ld      hl,color_table_data
+        call    tms_load_color_table
+
+        ; default game start variables.
+        ld      a,1
+        ld      (attract_mode),a
+        ld      a,5
+        ld      (lives),a
+        ld      a,8
+        ld      (jline),a
+        ld      a,STILL
+        ld      (jstate),a
+
+        xor     a
+        ld      (frame),a
+        ld      (j_s_fr),a
+        ld      (j_r_fr),a
+        ld      (j_j_fr),a
+        ld      (stun_ctr),a
+        ld      (gap_ctr),a
+
+        ld      a,176
+        ld      (jack+YP),a
+        ld      a,120
+        ld      (jack+XP),a
+        ld      a,SP_STILL
+        ld      (jack+PA),a
+        ret
