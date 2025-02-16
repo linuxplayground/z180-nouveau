@@ -54,16 +54,16 @@ module top (
     );
 // CPU STUFF
     localparam RAM_START = 20'h1000;
-    wire s2_n_deb;
+    wire s1_n_deb;
     debounce  debounce (
         .clock(hwclk),
-        .in(s2_n),
-        .out(s2_n_deb)
+        .in(s1_n),
+        .out(s1_n_deb)
     );
     wire [7:0]  rom_data;           // ROM output data bus
     memory rom ( .rd_clk(phi), .addr(a[11:0]), .data(rom_data));        // a boot ROM
 
-    assign reset_n = s2_n_deb;          // route the reset signal to the CPU (should debounce this)
+    assign reset_n = s1_n_deb;          // route the reset signal to the CPU (should debounce this)
 
     // When the CPU is reading from the FPGA drive the bus, else tri-state it.
     reg [7:0] dout;                 // what to write to data bus when requested
@@ -111,12 +111,12 @@ module top (
     // for read cycle: latch value on first phi falling edge after iorq becomes true:
     // fsm counting falling phi when rd is true & enable when count = 0 && iorq is true
     wire    iorq_rd_tick;
-    iorq_rd_fsm rd_fsm (.reset(~s2_n_deb), .phi(phi), .iorq(~iorq_n), .rd(~rd_n), .rd_tick(iorq_rd_tick) );
+    iorq_rd_fsm rd_fsm (.reset(~s1_n_deb), .phi(phi), .iorq(~iorq_n), .rd(~rd_n), .rd_tick(iorq_rd_tick) );
 
     // for a write cycle: latch value on second phi falling edge after iorq becomes true:
     // fsm counting falling phi when wr is true and enable when count = 1
     wire    iorq_wr_tick;
-    iorq_wr_fsm wr_fsm (.reset(~s2_n_deb), .phi(phi), .iorq(~iorq_n), .wr(~wr_n), .wr_tick(iorq_wr_tick) );
+    iorq_wr_fsm wr_fsm (.reset(~s1_n_deb), .phi(phi), .iorq(~iorq_n), .wr(~wr_n), .wr_tick(iorq_wr_tick) );
 
 
     // qualified asynchronous bus enable signals

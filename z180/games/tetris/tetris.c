@@ -226,6 +226,58 @@ void play(void) {
             vdp_refreshViewPort();
             ticks ++;
 
+            if (ticks % 6 == 0) {  //only take joystick input every 6th tick (every 100ms)
+                if (getJoyStatus() & Joy_Left) {
+                    clearTet(x,y,t,f);
+                    if(isSpaceFree(x-1,y,t,f)) {
+                        x --;
+                        displayTet(x,y,t,f);
+                    } else {
+                        displayTet(x,y,t,f);
+                    }
+                }
+                if (getJoyStatus() & Joy_Right) {
+                    clearTet(x,y,t,f);
+                    if(isSpaceFree(x+1,y,t,f)) {
+                        x ++;
+                        displayTet(x,y,t,f);
+                    } else {
+                        displayTet(x,y,t,f);
+                    }
+                }
+                if (getJoyStatus() & Joy_Down && dn_state == 0) {
+                    game_speed = 1;     // cant be 0 because of modulus of game ticks.
+                    dn_state = 1;
+                    hard_drop_flag = 1; // add fallen lines to score during hard drop.
+                    score = score + 1;  // the guidelines say, number of lines passed + 1
+                }
+
+                if (getJoyStatus() & Joy_Button && btn_state == 0) {
+                    clearTet(x,y,t,f);
+                    f ++;
+                    if (f > tets[t].count-1) {
+                        f = 0;
+                    }
+
+                    if (isSpaceFree(x,y,t,f)) {
+                        displayTet(x,y,t,f);
+                    } else {
+                        f --;
+                        if (f < 0) {
+                            f = tets[t].count-1;
+                        }
+                        displayTet(x,y,t,f);
+                    }
+                    btn_state = 1;
+                }
+            } else {
+                if (!(getJoyStatus() & Joy_Button)) {  // we try to know i the joystick is in nutral.
+                    btn_state = 0;
+                }
+                if (!(getJoyStatus() & Joy_Down)) {
+                    dn_state = 0;
+                }
+            }
             if (isKeyPressed()) {
                 uint8_t key = getChar();
                 if (key == ',') {
@@ -379,8 +431,8 @@ bool menu(void) {
     printAtLocationBuf(8,8,".(>) RIGHT");
     printAtLocationBuf(8,9,"X & Z ROT");
     printAtLocationBuf(8,10,"SPACE DROP");
-//    printAtLocationBuf(13-(8/2),12,"JOYSTICK");
-//    printAtLocationBuf(13-(10/2),13,"BTN ROTATE");
+    printAtLocationBuf(13-(8/2),12,"JOYSTICK");
+    printAtLocationBuf(13-(10/2),13,"BTN ROTATE");
     printAtLocationBuf(8,14,"DOWN DROP");
     printAtLocationBuf(8,17,"ESC QUIT");
     printAtLocationBuf(8,19,"PRODUCTION");
@@ -390,6 +442,9 @@ bool menu(void) {
     vdp_refreshViewPort();
 
     while (true) {
+        if (getJoyStatus() & Joy_Button) {
+            return true;
+        }
         if (isKeyPressed()) {
             if (getChar() == 0x1b) {
                 return false;
