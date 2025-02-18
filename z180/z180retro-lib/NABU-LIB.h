@@ -383,6 +383,9 @@ bool _autoScroll;
 // Are the vdp interrupts enabled?
 bool _vdpInterruptEnabled = false;
 
+// used for the vdp_enableVDPReadyInt()
+volatile uint8_t vdpStatusRegVal = 0x00;
+volatile bool    vdpIsReady      = false;
 
 // **************************************************************************
 // Colors for the VDP fgColor or bgColor settings

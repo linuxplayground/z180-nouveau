@@ -79,16 +79,9 @@ getJoy0:
 ; CLOBBERS: AF
 ;===============================================================================
 tms_wait:
-        push    af
-        push    bc
-        ld      bc,0x3fff
-tms_wait_l1:
-        dec     bc
-        ld      a, b
-        or      a, c
-        jr      nz,tms_wait_l1
-        pop     bc
-        pop     af
+        in      a,(io_tmslatch)
+        and     0x80
+        jr      z,tms_wait
         ret
 
 ;===============================================================================

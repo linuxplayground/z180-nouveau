@@ -25,13 +25,13 @@ tms_white:                      equ 0x0f
 ;  _vdpPatternNameTableAddr = 0x800;
 ;  _vdpColorTableAddr = 0xB00;
 
-tms_patternTable:               equ 0x0000
+tms_patternTable:               equ 0x0800
 tms_patternTableLen:            equ 0x0800
 
-tms_colorTable:                 equ 0x0B00
+tms_colorTable:                 equ 0x2000
 tms_colorTableLen:              equ 0x0300
 
-tms_nameTable:                  equ 0x0800
+tms_nameTable:                  equ 0x1400
 tms_nameTableLen:               equ 0x0300
 
 ;tms_spriteAttributeTable:       equ 0x1000

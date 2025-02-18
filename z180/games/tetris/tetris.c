@@ -6,48 +6,42 @@
 #include "nabu-games.h"
 #include "tetris.h"
 
+uint8_t block[8] = {0x7E,0xFF,0xC3,0xDB,0xDB,0xC3,0xFF,0x7E}; /*1  - 0x0c - tetris block   1 CYAN I*/
+                    //   0     8    10    18    20    28   30     38    40    48    50    58    60    68   70    78     80    88    90    98    A0    A8    B0    B8    C0    C8    D0    D8    E0   E8    F0    F8
+uint8_t colors[32] = {0x51, 0x51, 0x51, 0x51, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x31, 0x51, 0x71, 0x41, 0x91, 0xB1, 0x31, 0x61, 0xD1, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41, 0x41 };
 uint8_t tb[64];
 uint8_t tb8[4];
 uint8_t tb16[6];
+
+void add_pattern(uint8_t * pat, uint8_t pat_num);
 
 void initDisplay(void) {
     initNABULib();
     vdp_clearVRAM();
     vdp_initG1Mode(1, false, false, false, false); //uint8_t bgColor, bool bigSprites, bool scaleSprites, bool autoScroll, don't split thirds
     vdp_loadPatternTable(FAT,0x330);
-    //Load same colour into every colour table cell.
-    vdp_setPatternColor(0x41);
-    //Make UPPER CASE ASCII in LIGHT GREEN
-    for (uint8_t i = 65; i < 92; i++) {
-        vdp_colorizePattern(i,VDP_LIGHT_GREEN, VDP_BLACK);
-    }
-    //Make numbers in LIGHT RED
-    for (uint8_t i = 48; i < 58; i++) {
-        vdp_colorizePattern(i, VDP_DARK_RED, VDP_BLACK);
-    }
-    //Make puctuation in LIGHT GREEN
-    for (uint8_t i = 32; i<=47; i++) {
-        vdp_colorizePattern(i,VDP_LIGHT_GREEN, VDP_BLACK);
-    }
-    for (uint8_t i = 58; i<=64; i++) {
-        vdp_colorizePattern(i,VDP_LIGHT_GREEN, VDP_BLACK);
-    }
-    for (uint8_t i = 91; i<=96; i++) {
-        vdp_colorizePattern(i,VDP_LIGHT_GREEN, VDP_BLACK);
-    }
-    for (uint8_t i = 123; i<126; i++) {
-        vdp_colorizePattern(i,VDP_LIGHT_GREEN, VDP_BLACK);
-    }
-    //Tetris block colours
-    vdp_colorizePattern(0x0c, VDP_CYAN, VDP_BLACK);
-    vdp_colorizePattern(0x11, VDP_DARK_BLUE, VDP_BLACK);
-    vdp_colorizePattern(0x12, VDP_LIGHT_RED, VDP_BLACK);
-    vdp_colorizePattern(0x13, VDP_LIGHT_YELLOW, VDP_BLACK);
-    vdp_colorizePattern(0x14, VDP_LIGHT_GREEN, VDP_BLACK);
-    vdp_colorizePattern(0x15, VDP_DARK_RED, VDP_BLACK);
-    vdp_colorizePattern(0x16, VDP_MAGENTA, VDP_BLACK);
-
     vdp_setBackDropColor(VDP_DARK_YELLOW);          //Set border color
+
+    // place the block patterns for different colours in the gen table after 0x80
+    add_pattern(block, 0x80);
+    add_pattern(block, 0x88);
+    add_pattern(block, 0x90);
+    add_pattern(block, 0x98);
+    add_pattern(block, 0xA0);
+    add_pattern(block, 0xA8);
+    add_pattern(block, 0xB0);
+
+    vdp_loadColorTable(colors, 32);
+}
+
+void add_pattern(uint8_t* pat, uint8_t pat_num) {
+    vdp_setWriteAddress(_vdpPatternGeneratorTableAddr + (pat_num * 8));
+    for(uint8_t i=0; i<8; i++) {
+        IO_VDPDATA = pat[i];
+        nop();
+        nop();
+        nop();
+    }
 }
 
 void setupMap(void) {
@@ -225,7 +219,7 @@ void play(void) {
             vdp_waitVDPReadyInt();
             vdp_refreshViewPort();
             ticks ++;
-
+#if 0
             if (ticks % 6 == 0) {  //only take joystick input every 6th tick (every 100ms)
                 if (getJoyStatus() & Joy_Left) {
                     clearTet(x,y,t,f);
@@ -278,6 +272,7 @@ void play(void) {
                     dn_state = 0;
                 }
             }
+#endif
             if (isKeyPressed()) {
                 uint8_t key = getChar();
                 if (key == ',') {
@@ -442,9 +437,11 @@ bool menu(void) {
     vdp_refreshViewPort();
 
     while (true) {
+#if 0
         if (getJoyStatus() & Joy_Button) {
             return true;
         }
+#endif
         if (isKeyPressed()) {
             if (getChar() == 0x1b) {
                 return false;

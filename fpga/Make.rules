@@ -1,26 +1,25 @@
 #	Make rules for building and simulating Verilog apps. 
 #
-#	Copyright (C) 2023  John Winans
+#    Copyright (C) 2023  John Winans
 #
-#	This program is free software: you can redistribute it and/or modify
-#	it under the terms of the GNU General Public License as published by
-#	the Free Software Foundation, either version 3 of the License, or
-#	(at your option) any later version.
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
 #
-#	This program is distributed in the hope that it will be useful,
-#	but WITHOUT ANY WARRANTY; without even the implied warranty of
-#	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#	GNU General Public License for more details.
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
 #
-#	You should have received a copy of the GNU General Public License
-#	along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
 # Make sure the all rule is seen first to make it the default target
 all::
 
-
-LIB_DIR 	:= $(TOP)/lib
+include $(TOP)/Make.default
 
 ###################################################################
 # Rules to walk the filesystem tree
@@ -62,14 +61,20 @@ $(DOXY_DIRS):
 ###################################################################
 
 COMPILE.v	?= yosys
+COMPILE_OPT	?=
+SYNTH 	 	?= synth_ice40
 NEXTPNR 	?= nextpnr-ice40
+NEXTPNR_OPT	?=
+NEXTPNR_FMT	?= asc
 ARACHNE		?= arachne-pnr
-
+PACK		?= icepack
 
 DEVICE		?= up5k
 PACKAGE		?= sg48
 FLASH_PROG	?= sudo iceprog -d i:0x0403:0x6014
+PIN_FMT		?= pcf
 PINMAP		?= pinmap-upduino.pcf
+FREQ		?= 25
 
 ###################################################################
 # Rules that know how to build and simulate Verilog apps 
@@ -77,16 +82,16 @@ PINMAP		?= pinmap-upduino.pcf
 
 # useful for single-file builds
 %.blif : %.v
-	$(COMPILE.v) -p "synth_ice40 -top top -blif $@" $<
+	$(COMPILE.v) -p "$(SYNTH) -top top -blif $@" $<
 
 # useful for single-file builds
 %.json : %.v
-	$(COMPILE.v) -p "synth_ice40 -top top -json $@" $<
+	$(COMPILE.v) -p "$(SYNTH) -top top -json $@" $<
 
 
 # Use nextpnr-ice40 to build from a JSON file
 %.asc : %.json
-	$(NEXTPNR) --$(DEVICE) --package $(PACKAGE) --pcf $(PINMAP) --asc $@ --json $<
+	$(NEXTPNR) --$(DEVICE) --package $(PACKAGE) --$(PIN_FMT) $(PINMAP) --freq $(FREQ) $(NEXTPNR_OPT) --$(NEXTPNR_FMT) $@ --json $<
 
 # Use arachne-pnr to build from a BLIF file 
 %.asc : %.blif
@@ -95,19 +100,13 @@ PINMAP		?= pinmap-upduino.pcf
 
 # make a binary config file from an ASC file
 %.bin : %.asc
-	icepack $< $@
+	$(PACK) $< $@
 
 # Run Icarus and generate a vcd file (containing waveforms from the simulation)
 %.vcd: %.vvp
 	vvp $<
 
 clean::
-	make rmfiles
-	cd vdp
-	make rmfiles
-	cd $(TOP)
-
-rmfiles:
-	rm -f *.bin *.vvp *.vcd *.asc *.blif *.json *.out
+	rm -f *.bin *.vvp *.vcd *.asc *.blif *.json *.rpt
 
 world:: clean all

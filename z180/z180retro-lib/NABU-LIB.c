@@ -131,8 +131,9 @@ void vdp_setReadAddress(uint16_t address) __z88dk_fastcall {
 
 void vdp_waitVDPReadyInt(void) {
   // Just spin loop until we get a proper way to read vertical blank signal
-  uint16_t i;
-  for (i=0; i<0x3FFF; i++) {;;}
+    while ((IO_VDPLATCH & 0x80) == 0)
+      ;
+    vdpStatusRegVal = IO_VDPLATCH;
 }
 
 void vdp_enableVDPReadyInt(void) {
@@ -154,18 +155,25 @@ void vdp_init(uint8_t mode, uint8_t fgColor, uint8_t bgColor, bool big_sprites, 
 
   _autoScroll = autoScroll;
 
-  _vdpInterruptEnabled = false;
+  _vdpInterruptEnabled = true;
 
   vdp_cursor.x = 0;
   vdp_cursor.y = 0;
   
-  _vdpPatternGeneratorTableAddr = 0x00;
-  _vdpPatternNameTableAddr = 0x800;
-  _vdpColorTableAddr = 0xB00;
+  _vdpPatternGeneratorTableAddr = 0x800;
+  _vdpPatternNameTableAddr = 0x1400;
+  _vdpColorTableAddr = 0x2000;
   _vdpCursorMaxX = 31;
   _vdpCursorMaxXFull = 32;
   _vdpTextBufferSize = 768;
   
+  vdp_setRegister(0, 0);
+  vdp_setRegister(1, 0xE0);
+  vdp_setRegister(2, 0x05);
+  vdp_setRegister(3, 0x80);
+  vdp_setRegister(4, 0x01);
+  vdp_setRegister(5, 0x20);
+  vdp_setRegister(6, 0x00);
   vdp_setRegister(7, (fgColor << 4) | (bgColor & 0x0f));
 
   vdp_clearScreen();
@@ -175,7 +183,7 @@ void vdp_clearVRAM(void) {
 
   vdp_setWriteAddress(0x00);
 
-  for (uint16_t i = 0; i < 0x800 + 0x300 + 0x300; i++)
+  for (uint16_t i = 0; i < 0x3800; i++)
     vdp_put(0);
 }
 

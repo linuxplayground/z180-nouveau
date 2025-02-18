@@ -96,10 +96,15 @@ set_io             rgb[9]  83
 set_io             rgb[10] 85
 set_io             rgb[11] 88
 
-set_io              hsync   60
-set_io              vsync   62
+#set_io              vga_red     64    #red
+#set_io              vga_grn   73    #green
+#set_io              vga_blu    81    #blue
+
+set_io              vga_hsync   60
+set_io              vga_vsync   62
 
 # JOYSTICK INTERFACE
+
 set_io             A8[0]    91
 set_io             A8[1]    93
 set_io             A8[2]    94

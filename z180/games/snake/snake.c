@@ -26,6 +26,8 @@ void init(void) {
     vdp_colorizePattern(HEAD_DOWN,  VDP_MAGENTA,     VDP_BLACK);   //Snake head
     vdp_colorizePattern(HEAD_LEFT,  VDP_MAGENTA,     VDP_BLACK);   //Snake head
     vdp_colorizePattern(HEAD_RIGHT, VDP_MAGENTA,     VDP_BLACK);   //Snake head
+
+    //vdp_enableVDPReadyInt();
 }
 
 /* Display the menu and then wait for the user to either exit (false) or continue (true)*/
@@ -160,7 +162,7 @@ void game(void) {
         if (pause) {
             bool flash = false;
             while(true) {
-                if (getJoyStatus() & Joy_Button) {
+                if (isKeyPressed()) {
                     pause = false;
                     break;
                 }
@@ -175,8 +177,9 @@ void game(void) {
                 vdp_refreshViewPort();
             }
             vdp_setCharAtLocationBuf(head.x, head.y, 0x00);
-        } else { //if not paused
-            if( (getJoyStatus() & Joy_Left) && (head.dir != HEAD_RIGHT)) {
+        } else {
+        //if not paused
+            /*if( (getJoyStatus() & Joy_Left) && (head.dir != HEAD_RIGHT)) {
                 head.dir = HEAD_LEFT;
                 head.pattern = HEAD_LEFT;
             }
@@ -191,6 +194,23 @@ void game(void) {
             else if( (getJoyStatus() & Joy_Down) && (head.dir != HEAD_UP)) {
                 head.dir = HEAD_DOWN;
                 head.pattern = HEAD_DOWN;
+            }
+            */
+            if ( (isKeyPressed() ) ) {
+                uint8_t _key = getChar();
+                if(_key == 'a' || _key == 'A') {
+                    head.dir = HEAD_LEFT;
+                    head.pattern = HEAD_LEFT;
+                } else if (_key == 'w' || _key == 'W') {
+                    head.dir = HEAD_UP;
+                    head.pattern = HEAD_UP;
+                } else if (_key == 'd' || _key == 'D') {
+                    head.dir = HEAD_RIGHT;
+                    head.pattern = HEAD_RIGHT;
+                } else if (_key == 's' || _key == 'S') {
+                    head.dir = HEAD_DOWN;
+                    head.pattern = HEAD_DOWN;
+                }
             }
 
             /* Regulate the speed of the game */
