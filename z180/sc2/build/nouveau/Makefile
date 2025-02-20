@@ -12,7 +12,7 @@ all:: $(PROGS)
 
 sc2.com: $(TOP)/src/main.z80
 	export ZCCCFG=$(TOP)/../z88dk/lib/config
-	$(TOP)/../z88dk/bin/z80asm -I$(TOP)/lib -I$(PLATFORM_DIR) -o$@ -mz180  -l -s -b $^
+	$(TOP)/../z88dk/bin/z80asm -l$(TOP)/lib/nouveau.lib -o$@ -mz180  -l -m -s -b $^
 
 clean::
 	rm -f *.com *.lis *.o

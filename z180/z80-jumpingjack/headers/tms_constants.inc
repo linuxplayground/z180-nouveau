@@ -1,3 +1,5 @@
+#ifndef TMS_CONST_H
+#define TMS_CONST_H
 ;===============================================================================
 ; COLOURS
 ;===============================================================================
@@ -37,3 +39,4 @@ tms_g2_color_table_len:        equ 0x1800
 tms_g2_name_table:             equ 0x1800
 ;tms_g2_spriteAttributeTable:  equ 0x0000
 ;tms_g2_spritePatternTable:    equ 0x0000
+#endif

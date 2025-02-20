@@ -1,3 +1,5 @@
+extern io_tmslatch, io_tmsdata, tms_init_g2, tms_set_write_address
+
 BDOS:           equ 5
 
 C_WRITESTR:     equ 9   ; C=9, DE=address of $ terminated string
@@ -109,14 +111,6 @@ first_run:      db 0
 ;       INCLUDES
 ;==============================================================================
 
-; includes platform
-        include "platform.z80"
-
-; include standard libraries
-        include "macros.z80"
-        include "tms.z80"
-        include "stdlib.z80"
-        include "strings.z80"
 ;==============================================================================
 ;       STACK
 ;==============================================================================

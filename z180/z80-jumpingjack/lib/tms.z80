@@ -28,8 +28,8 @@ extern str_len
 extern tms_wait
 
 section LIB
-        INCLUDE "tms_constants.z80"
-        INCLUDE "macros.z80"
+        INCLUDE "tms_constants.inc"
+        INCLUDE "macros.inc"
 ;===============================================================================
 ; Initialize the VDP in Graphics Mode 1 mode.
 ; refer to .tms_init_g1_registers at the end of this file for details.

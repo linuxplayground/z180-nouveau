@@ -1,4 +1,4 @@
-        INCLUDE "../lib/macros.z80"
+        INCLUDE "macros.inc"
 
 extern init, tms_delay, is_key_pressed, get_char, set_char_at_loc_buf
 extern get_joy_status, joy_map_button, tms_clear_screen, joy_map_left
@@ -1145,7 +1145,7 @@ gap_elevens:
 
 ; includes platform
 ; include standard libraries
-        include "../lib/tms_constants.z80"
+        include "tms_constants.inc"
 ; include game libraries
         include "setup.z80"
         include "sprites.z80"
