@@ -24,3 +24,15 @@ Date:   Fri Feb 3 20:05:13 2023 +0000
 
 Perhaps other versions will work.  This is the one I used and I know this works
 for me.
+
+## Assembly Libs
+
+A collection of essembly libraries are included in the `libnouveau` folder.
+
+Easiest is to symlink to the `libnouveau/lib` path or path to them in you
+makefiles.  The associated headers are also included in the
+`libnouveau/headers` path.
+
+## Macro Library
+
+A handy `macros.inc` file is included in `libnouveau/headers/macros.inc`.

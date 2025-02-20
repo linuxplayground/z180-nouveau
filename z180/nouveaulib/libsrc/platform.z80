@@ -1,0 +1,116 @@
+public io_tmslatch, io_tmsdata
+public is_key_pressed, joy_status, joy_map_left, joy_map_right, joy_map_up, joy_map_down, joy_map_button
+public get_char
+public get_joy_status
+public tms_wait
+public init
+public ay_read, ay_write, ay_all_off, ay_set_mixer, ay_set_tone_volume, ay_set_noise_volume, ay_play_note_delay, ay_play_noise_delay
+ 
+section LIB
+;===============================================================================
+; VARIABLES, ENUMS AND IO PORTS
+;===============================================================================
+io_tmsdata:             equ 0x80
+io_tmslatch:            equ 0x81
+joy0:                   equ 0xa8
+joy1:                   equ 0xa9
+
+joy_map_left:           equ %00000100
+joy_map_right:          equ %00100000
+joy_map_up:             equ %10000000
+joy_map_down:           equ %01000000
+joy_map_button:         equ %00000001
+
+CNTLA0:                 equ 0x00
+CNTLB0:                 equ 0x02
+RDR0:                   equ 0x08
+ASEXT0:                 equ 0x12
+STAT0:                  equ 0x04
+TDR0:                   equ 0x06
+
+
+joy_status:             ds 2
+
+;===============================================================================
+; Check if a key was pressed
+; INPUT: void
+; OUTPUT: A = 1 when a key is pressed, A = 0 when no key pressed.
+; CLOBBERS: IY
+;===============================================================================
+is_key_pressed:
+      ld      a,0
+      in0     a,(CNTLA0)
+      and     ~0x08
+      out0    (CNTLA0),a
+      ld      a,0 
+      in0     a,(STAT0)
+      and     0b10000000
+      ret     z
+      ld      a,1
+      ret
+
+;===============================================================================
+; Gets latest character entered.  DOES NOT BLOCK ON RETRO
+; INPUT: void
+; OUTPUT: Ascii value of key in A
+; CLOBBERS: IY, BC
+;===============================================================================
+get_char:
+      ld      a,0
+      in0     a,(RDR0)
+      ret
+
+;===============================================================================
+; Returns the Joystick Status that can be matched against the Joystick enums
+; defined at the beginning of this file.
+; INPUT: A 0 = joy0, !0 = joy1
+; OUTPUT: joy_status
+; CLOBBERS: none
+;===============================================================================
+get_joy_status:
+        or      a
+        jr      z,getJoy0
+getJoy1:
+        in      a,(joy1)
+        xor     0xff
+        ld      (joy_status+1),a
+        ret
+getJoy0:
+        in      a,(joy0)
+        xor     0xff
+        ld      (joy_status+0),a
+        ret
+
+;===============================================================================
+; Wait for the VDP VSYNC status to appear on the status register
+; INPUT: void
+; OUTPUT: void
+; CLOBBERS: AF
+;===============================================================================
+tms_wait:
+        in      a,(io_tmslatch)
+        and     0x80
+        jr      z,tms_wait
+        ret
+
+;===============================================================================
+; Stub functions that can't be done on the retro
+;===============================================================================
+init:
+        ret
+ay_read:
+        ret
+ay_write:
+        ret
+ay_all_off:
+        ret
+ay_set_mixer:
+        ret
+ay_set_tone_volume:
+        ret
+ay_set_noise_volume:
+        ret
+ay_play_note_delay:
+        ret
+ay_play_noise_delay:
+        ret
