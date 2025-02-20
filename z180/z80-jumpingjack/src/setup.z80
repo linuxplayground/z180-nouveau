@@ -1,4 +1,3 @@
-extern tms_clear_vram, tms_load_color_table
 ;===============================================================================
 ; Setups up the VDP memory and registers.
 ; INPUT: void

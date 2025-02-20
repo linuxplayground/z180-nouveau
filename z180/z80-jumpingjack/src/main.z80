@@ -1,12 +1,9 @@
         INCLUDE "macros.inc"
-
-extern init, tms_delay, is_key_pressed, get_char, set_char_at_loc_buf
-extern get_joy_status, joy_map_button, tms_clear_screen, joy_map_left
-extern joy_map_right,tms_set_backdrop_color, tms_flush_buffer, tms_wait, ay_all_off
-extern cpm_terminate, ay_play_note_delay, random, get_char_at_loc_buf, tms_cler_vram
-extern tms_init_g1, tms_load_pattern_table, center_text_in_buf_row, ay_play_noise_delay
-
-
+        INCLUDE "tms.inc"
+        INCLUDE "stdio.inc"
+        INCLUDE "stdlib.inc"
+        INCLUDE "strings.inc"
+        INCLUDE "nouveau.inc"
 
 ; JACK STATES
 STILL:          equ 0

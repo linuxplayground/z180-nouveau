@@ -1,4 +1,5 @@
-extern io_tmslatch, io_tmsdata, tms_init_g2, tms_set_write_address
+INCLUDE "tms.inc"
+INCLUDE "nouveau.inc"
 
 BDOS:           equ 5
 
