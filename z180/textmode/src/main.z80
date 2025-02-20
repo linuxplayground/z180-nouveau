@@ -1,0 +1,44 @@
+;
+INCLUDE "tms.inc"
+INCLUDE "nouveau.inc"
+
+    org     0x100
+    ld      sp,stack
+; MAIN
+    call    tms_clear_vram
+    call    tms_init_text
+    ld      hl,fnt6x8
+    ld      bc,fnt6x8_len
+    call    tms_load_pattern_table
+
+    ld      a,(tms_name_table)
+    ld      e,a
+    ld      a,(tms_name_table+1)
+    ld      d,a
+    call    tms_set_write_address
+
+textout:
+    ld      hl,str_welcome
+    ld      a,(hl)
+    ld      b,str_welcome_len
+    otir
+
+loop:
+    call    is_key_pressed
+    or      a
+    jr      z,loop
+    call    get_char
+    cp      0x1B
+    jr      z,exit
+    out     (io_tmsdata),a
+    jr      loop
+exit:
+    jp      0
+
+INCLUDE "fnt6x8.z80"
+
+str_welcome: db "Type something: "
+str_welcome_len: equ $-str_welcome
+; STACK
+    ds      1024
+stack:  equ     $

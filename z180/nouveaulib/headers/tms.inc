@@ -1,7 +1,7 @@
 #ifndef TMS_H
 #define TMS_H
 
-extern tms_init_g1, tms_init_g2
+extern tms_init_g1, tms_init_g2, tms_init_text
 extern tms_set_register, tms_put, tms_set_backdrop_color
 extern tms_set_read_address, tms_set_write_address
 extern tms_write_fast, tms_write_slow

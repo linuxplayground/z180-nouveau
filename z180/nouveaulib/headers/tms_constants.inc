@@ -23,6 +23,9 @@ tms_white:                      equ 0x0f
 ;===============================================================================
 ; VDP MEMORY - See .tms_init_g1_registers on tms.asm for details
 ;===============================================================================
+tms_text_pattern_table:       equ 0x0000
+tms_text_pattern_table_len:   equ 0x0000
+tms_text_name_table:          equ 0x0800
 
 tms_g1_pattern_table:          equ 0x0800
 tms_g1_pattern_table_len:      equ 0x0800

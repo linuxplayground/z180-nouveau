@@ -1,4 +1,4 @@
-public tms_init_g1, tms_init_g2
+public tms_init_g1, tms_init_g2, tms_init_text
 public tms_set_register, tms_put, tms_set_backdrop_color
 public tms_set_read_address, tms_set_write_address
 public tms_write_fast, tms_write_slow
@@ -30,6 +30,32 @@ extern tms_wait
 section LIB
         INCLUDE "tms_constants.inc"
         INCLUDE "macros.inc"
+;===============================================================================
+; Initialize the VDP in Text mode
+; Disable all sprites by setting byte 0 in each sprite attribute table to 0xD0
+; INPUT: void
+; OUTPUT: void
+; CLOBBERS: none
+;===============================================================================
+tms_init_text:
+        ld      hl,tms_init_text_registers
+        ld      b,tms_init_text_registers_length
+        ld      c,io_tmslatch
+        otir
+
+        ld      hl, tms_text_pattern_table
+        ld      de, tms_pattern_table
+        call    set16
+
+        ld      hl, tms_text_pattern_table_len
+        ld      de, tms_pattern_table_len
+        call    set16
+
+        ld      hl, tms_text_name_table
+        ld      de, tms_name_table
+        call    set16
+        ret
+
 ;===============================================================================
 ; Initialize the VDP in Graphics Mode 1 mode.
 ; refer to .tms_init_g1_registers at the end of this file for details.
@@ -63,7 +89,6 @@ tms_init_g1:
         ld      hl, tms_g1_color_table_len
         ld      de, tms_color_table_len
         call    set16
-
 
         ret
         ; clear sprite attribute table and set Y position to D0
@@ -281,7 +306,7 @@ tms_clear_vram:
         ld      de,0x0000
         call    tms_set_write_address
 
-        ld      de,0x0E00
+        ld      de,0x3FFF
         ld      l,0x00
 
         ; pass through
@@ -528,6 +553,18 @@ tms_delay:
         call    tms_wait
         djnz    tms_delay
         ret
+
+tms_init_text_registers:
+        db      0x00,0x80       ; text mode no external vid
+        db      0xF0,0x81       ; 16K, enable disp, enable int
+        db      0x02,0x82       ; name table 0x0800
+        db      0xff,0x83       ; not used
+        db      0x00,0x84       ; pattern table 0x0000 - 0x07FF
+        db      0xff,0x85       ; not used
+        db      0xff,0x86       ; not used
+        db      0xF5,0x87       ; fg/bg colors
+tms_init_text_registers_length: equ $-tms_init_text_registers
+
 
 ;===============================================================================
 ; Graphics Mode I Registers
