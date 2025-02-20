@@ -1,0 +1,126 @@
+BDOS:           equ 5
+
+C_WRITESTR:     equ 9   ; C=9, DE=address of $ terminated string
+F_OPEN:         equ 15  ; C=0xF, DE=FCB Address, Errors returned in BA, HL
+F_CLOSE:        equ 16  ; C=0x10, DE=FCB Address, Errors in BA, HL
+F_READ:         equ 20  ; C=0x14, DE=FCB Address, Errros in BA, HL
+F_DMAOFF:       equ 26  ; C=0x1A, DE=Address
+BUFFER:         equ 0x1000
+FCB:            equ 0x5C
+; BEGIN
+        org     0x100
+        ld      sp,stack
+main:
+       ; wait for vblank period
+vb_loop:
+        in      a,(io_tmslatch)
+        or      0x80
+        jr      z,vb_loop
+
+
+        call    tms_init_g2
+
+        ; set vram write address to zero
+        ld      de,0
+        call    tms_set_write_address
+
+        ; set dma
+        ld      c,F_DMAOFF
+        ld      de,BUFFER
+        push    de
+        call    BDOS
+
+        ; open file
+        ld      c,F_OPEN
+        ld      de,FCB
+        call    BDOS
+
+; READ WHOLE FILE
+readfile:
+        ld      c,F_READ
+        ld      de,FCB
+        call    BDOS
+        ; was it the end of file
+        or      a
+        jp      nz,eofile
+        ; get DE from the stack
+        pop     de
+        ; add 128
+        add     de,0x80
+        ; save back to stack
+        push    de
+        ; set new DMA
+        ld      c,F_DMAOFF
+        call    BDOS
+        ; loop
+        jp      readfile
+eofile:
+        pop     de              ; stack is all good now
+
+        ; write to vram
+        ld      de,0
+        ld      hl,BUFFER + 7
+        ; HL now is at start of data
+        ld      bc,0x3800
+        call    vdp_write
+
+        ; write a message to the screen
+        ld      c,C_WRITESTR
+        ld      de,str_done
+        call    BDOS
+
+        jp      0
+
+        ;********************************************************
+        ; copy from RAM to VRAM
+        ; HL = RAM address
+        ; DE = VRAM address
+        ; BC = number of bytes to copy
+vdp_write:
+        in      a,(io_tmslatch)                    ; read the status register to reset the reg fsm
+        call    tms_set_write_address
+
+        ld      d,b
+        ld      e,c
+        ld      c,io_tmsdata
+
+        ld      a,d
+        or      a
+        jr      z,wr_resid
+        ld      b,0             ; 256 bytes
+wr_256:
+        otir
+        dec     d
+        jr      nz,wr_256
+
+wr_resid:
+        ; is there any residual ?
+        ld      a,e
+        or      a
+        ret     z               ; no? then we are done
+
+        ld      b,e
+        otir
+        ret
+
+str_done:       db "Done!$"
+first_run:      db 0
+;==============================================================================
+;       INCLUDES
+;==============================================================================
+
+; includes platform
+        include "platform.z80"
+
+; include standard libraries
+        include "macros.z80"
+        include "tms.z80"
+        include "stdlib.z80"
+        include "strings.z80"
+;==============================================================================
+;       STACK
+;==============================================================================
+
+
+        ds      1024
+stack:  equ     $

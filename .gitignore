@@ -4,4 +4,3 @@
 **/*.asc
 **/*.json
 **/*.bin
-**/build/*
