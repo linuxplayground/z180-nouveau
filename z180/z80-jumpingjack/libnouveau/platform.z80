@@ -1,3 +1,12 @@
+public io_tmslatch, io_tmsdata
+public is_key_pressed, joy_status, joy_map_left, joy_map_right, joy_map_up, joy_map_down, joy_map_button
+public get_char
+public get_joy_status
+public tms_wait
+public init
+public ay_read, ay_write, ay_all_off, ay_set_mixer, ay_set_tone_volume, ay_set_noise_volume, ay_play_note_delay, ay_play_noise_delay
+ 
+section LIB
 ;===============================================================================
 ; VARIABLES, ENUMS AND IO PORTS
 ;===============================================================================

@@ -1,3 +1,6 @@
+public cpm_terminate, fillmem, set16, random
+
+section LIB
 ;===============================================================================
 ; Jumpt to CPM Warm Boot vector
 ; INPUT: void

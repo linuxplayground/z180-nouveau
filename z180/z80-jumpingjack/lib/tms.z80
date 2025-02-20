@@ -1,5 +1,35 @@
-        INCLUDE "tms_constants.z80"
+public tms_init_g1, tms_init_g2
+public tms_set_register, tms_put, tms_set_backdrop_color
+public tms_set_read_address, tms_set_write_address
+public tms_write_fast, tms_write_slow
+public tms_set_all_colors, tms_clear_vram
+public tms_load_color_table, tms_load_pattern_table
+public tms_clear_screen, tms_clear_buffer, tms_flush_buffer
+public set_char_at_loc_buf, get_char_at_loc_buf
+public print_at_loc_buf, center_text_in_buf_row
+public tms_delay
 
+public tms_buffer
+public tms_pattern_table
+public tms_pattern_table_len
+public tms_name_table
+public tms_name_table_len
+public tms_color_table
+public tms_color_table_len
+public tms_sprite_attribute_table
+public tms_sprite_attribute_table_len
+public tms_sprite_pattern_table
+public tms_sprite_pattern_table_len
+
+extern set16
+extern io_tmslatch
+extern io_tmsdata
+extern str_len
+extern tms_wait
+
+section LIB
+        INCLUDE "tms_constants.z80"
+        INCLUDE "macros.z80"
 ;===============================================================================
 ; Initialize the VDP in Graphics Mode 1 mode.
 ; refer to .tms_init_g1_registers at the end of this file for details.

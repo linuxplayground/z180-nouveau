@@ -1,3 +1,4 @@
+SECTION rodata
 ; 1 = jack_idle_f0
 ; 2 = jack_right_f0
 ; 3 = jack_left_f0

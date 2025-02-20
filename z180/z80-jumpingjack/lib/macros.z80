@@ -1,3 +1,5 @@
+#ifndef MACROS_H
+#define MACROS_H
 ;===============================================================================
 ; Add A to HL, result in HL
 ; INPUT: A = 8bit value to add to HL, HL=value to add to.
@@ -103,4 +105,4 @@
             dec     a
             ld      (addr),a
     ENDM
-
+#endif

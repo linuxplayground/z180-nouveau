@@ -18,6 +18,11 @@ p_fcur:                 dw 0x0000       ; ptr to current byte in file
 fcount:                 db 0x80         ; number of bytes to read or write
 frec:                   ds 0x80         ; 128 byte internal buffer for file io
 
+
+public  getk, puts
+public  f_make, f_open, f_close, f_read, f_write
+
+section LIB
 ;===============================================================================
 ; CP/M Get Key press
 ; INPUT: void
