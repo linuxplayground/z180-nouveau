@@ -11,7 +11,6 @@ setup:
         ld      bc,tile_patterns_len
         ld      hl,tile_patterns
         call    tms_load_pattern_table
-
         ;ld      bc,sprite_patterns_len
         ;ld      hl,empty_sprite
         ;call    tms_load_sprite_pattern_table

@@ -21,7 +21,6 @@ public tms_sprite_attribute_table_len
 public tms_sprite_pattern_table
 public tms_sprite_pattern_table_len
 
-extern set16
 extern io_tmslatch
 extern io_tmsdata
 extern str_len
@@ -44,16 +43,13 @@ tms_init_text:
         otir
 
         ld      hl, tms_text_pattern_table
-        ld      de, tms_pattern_table
-        call    set16
+        ld      (tms_pattern_table),hl
 
         ld      hl, tms_text_pattern_table_len
-        ld      de, tms_pattern_table_len
-        call    set16
+        ld      (tms_pattern_table_len),hl
 
         ld      hl, tms_text_name_table
-        ld      de, tms_name_table
-        call    set16
+        ld      (tms_name_table),hl
         ret
 
 ;===============================================================================
@@ -71,24 +67,19 @@ tms_init_g1:
         otir
 
         ld      hl, tms_g1_pattern_table
-        ld      de, tms_pattern_table
-        call    set16
+        ld      (tms_pattern_table),hl
 
         ld      hl, tms_g1_pattern_table_len
-        ld      de, tms_pattern_table_len
-        call    set16
+        ld      (tms_pattern_table_len),hl
 
         ld      hl, tms_g1_name_table
-        ld      de, tms_name_table
-        call    set16
+        ld      (tms_name_table),hl
 
         ld      hl, tms_g1_color_table
-        ld      de, tms_color_table
-        call    set16
+        ld      (tms_color_table),hl
 
         ld      hl, tms_g1_color_table_len
-        ld      de, tms_color_table_len
-        call    set16
+        ld      (tms_color_table_len),hl
 
         ret
         ; clear sprite attribute table and set Y position to D0
@@ -120,24 +111,19 @@ tms_init_g2:
         otir
 
         ld      hl, tms_g2_pattern_table
-        ld      de, tms_pattern_table
-        call    set16
+        ld      (tms_pattern_table),hl
 
         ld      hl, tms_g2_pattern_table_len
-        ld      de, tms_pattern_table_len
-        call    set16
+        ld      (tms_pattern_table_len),hl
 
         ld      hl, tms_g2_name_table
-        ld      de, tms_name_table
-        call    set16
+        ld      (tms_name_table),hl
 
         ld      hl, tms_g2_color_table
-        ld      de, tms_color_table
-        call    set16
+        ld      (tms_color_table),hl
 
         ld      hl, tms_g2_color_table_len
-        ld      de, tms_color_table_len
-        call    set16
+        ld      (tms_color_table_len),hl
 
         ret
         ; clear sprite attribute table and set Y position to D0
@@ -280,20 +266,12 @@ tms_write_slow_loop:
 ; CLOBBERS: HL, DE
 ;===============================================================================
 tms_set_all_colors:
-        push    af
-        ld      a,(tms_color_table)
-        ld      e,a
-        ld      a,(tms_color_table + 1)
-        ld      d,a
+        ld      de,(tms_color_table)
         call    tms_set_write_address
 
         ld      l,c
-        ld      a,(tms_color_table_len)
-        ld      e,a
-        ld      a,(tms_color_table_len + 1)
-        ld      d,a
+        ld      de,(tms_color_table_len)
         call    tms_set_vram_loop_start
-        pop     af
         ret
 
 ;===============================================================================
@@ -345,13 +323,8 @@ tms_set_vram_loop:
 ; CLOBBERS: DE
 ;===============================================================================
 tms_load_color_table:
-        push    af
-        ld      a,(tms_color_table)
-        ld      e,a
-        ld      a,(tms_color_table+1)
-        ld      d,a
+        ld      de,(tms_color_table)
         call    tms_write_slow
-        pop     af
         ret
 
 ;===============================================================================
@@ -362,13 +335,8 @@ tms_load_color_table:
 ; CLOBBERS: DE
 ;===============================================================================
 tms_load_pattern_table:
-        push    af
-        ld      a,(tms_pattern_table)
-        ld      e,a
-        ld      a,(tms_pattern_table+1)
-        ld      d,a
+        ld      de,(tms_pattern_table)
         call    tms_write_slow
-        pop     af
         ret
 
 ;===============================================================================
@@ -403,13 +371,11 @@ tms_clear_screen:
 ; CLOBBERS: AF, BC, DE, HL
 ;===============================================================================
 tms_clear_buffer:
-        ld      b,0x00
-        ld      c,0x03
+        ld      bc,0x0300
         ld      hl,tms_buffer
 tms_clear_buffer_loop:
         ld      a,0x00
         ld      (hl),a
-        inc     hl
         djnz    tms_clear_buffer_loop
         dec     c
         or      c
@@ -424,16 +390,11 @@ tms_clear_buffer_loop:
 ; CLOBBERS: AF, BC, DE, HL
 ;===============================================================================
 tms_flush_buffer:
-        push    af
-        ld      a,(tms_name_table)
-        ld      e,a
-        ld      a,(tms_name_table+1)
-        ld      d,a
+        ld      de,(tms_name_table)
         ld      hl,tms_buffer
-        ld      bc,0x300
+        ld      bc,0x0300
         call    tms_wait
         call    tms_write_slow
-        pop     af
         ret
 
 ;===============================================================================

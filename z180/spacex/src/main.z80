@@ -1,0 +1,73 @@
+; vim: set ts=4 sw=4 ai et:
+INCLUDE "tms.inc"
+INCLUDE "nouveau.inc"
+INCLUDE "tms_constants.inc"
+    org     0x100
+    ld      sp,stack
+; MAIN
+    call    tms_clear_vram
+    call    tms_init_g1
+    ld      hl,nabu_games_patterns
+    ld      bc,nabu_games_patterns_len
+    call    tms_load_pattern_table
+
+    ld      c,tms_white << 4 | tms_dark_blue & 0x0F
+    call    tms_set_all_colors
+    ;ld      bc,color_table_data_len
+    ;ld      hl,color_table_data
+    ;call    tms_load_color_table
+
+    ld      de,(tms_name_table)
+    call    tms_set_write_address
+
+textout:
+loop:
+    call    is_key_pressed
+    or      a
+    jr      z,loop
+    call    get_char
+    cp      0x1B
+    jr      z,exit
+    out     (io_tmsdata),a
+    jr      loop
+exit:
+    jp      0
+
+INCLUDE "nabu-games-patterns.inc"
+;color_table_data:
+;       db     0x4e   ; 00-07
+;       db     0x4e   ; 08-0f
+;       db     0x4e   ; 10-17
+;       db     0x4e   ; 18-1f
+;       db     0x4e   ; 20-27
+;       db     0x4e   ; 28-2f
+;       db     0x4e   ; 30-37
+;       db     0x4e   ; 38-3f
+;       db     0x4e   ; 40-47
+;       db     0x4e   ; 48-4f
+;       db     0x4e   ; 50-57
+;       db     0x4e   ; 58-5f
+;       db     0x4e   ; 60-67
+;       db     0x4e   ; 68-6f
+;       db     0x4e   ; 70-77
+;       db     0x4e   ; 78-7f
+;       db     0x4e   ; 80-87
+;       db     0x4e   ; 88-8f
+;       db     0x4e   ; 90-97
+;       db     0x4e   ; 98-9f
+;       db     0x4e   ; a0-a7
+;       db     0x4e   ; a8-af
+;       db     0x4e   ; b0-b7
+;       db     0x4e   ; b8-bf
+;       db     0x4e   ; c0-c7
+;       db     0x4e   ; c8-cf
+;       db     0x4e   ; d0-d7
+;       db     0x4e   ; d8-df
+;       db     0x4e   ; e0-e7
+;       db     0x4e   ; e8-ef
+;       db     0x4e   ; f0-f7
+;       db     0x4e   ; f8-ff
+;color_table_data_len: equ $-color_table_data
+; STACK
+    ds      1024
+stack:  equ     $

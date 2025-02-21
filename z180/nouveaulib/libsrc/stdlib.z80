@@ -1,4 +1,4 @@
-public cpm_terminate, fillmem, set16, random
+public cpm_terminate, fillmem, random
 
 section LIB
 ;===============================================================================
@@ -23,21 +23,6 @@ fillmem:
         inc     de
         dec     bc
         ldir
-        ret
-
-;===============================================================================
-; Save 16 value a word of memory
-; INPUT: HL = value of equate
-;        DE = address in memory
-;===============================================================================
-set16:
-        push    af
-        ld      a,l
-        ld      (DE),a
-        inc     DE
-        ld      a,h
-        ld      (DE),a
-        pop     af
         ret
 
 ;===============================================================================

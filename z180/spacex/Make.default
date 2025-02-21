@@ -1,0 +1,6 @@
+# TOP must bedeclared before including this file!
+
+BASEDIR = $(TOP)
+
+
+MKDIR = mkdir -pv
