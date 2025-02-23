@@ -163,10 +163,6 @@ tms_set_register:
 ;===============================================================================
 tms_put:
         out     (io_tmsdata),a
-        push    hl
-        pop     hl
-        push    hl
-        pop     hl
         ret
 
 ;===============================================================================
@@ -304,12 +300,6 @@ tms_set_vram_loop_start:
         ld      a,l
 tms_set_vram_loop:
         out     (io_tmsdata),a
-        push    hl
-        pop     hl
-        push    hl
-        pop     hl
-        push    hl
-        pop     hl
         djnz    tms_set_vram_loop
         dec     d
         jp      nz,tms_set_vram_loop

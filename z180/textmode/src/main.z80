@@ -30,7 +30,7 @@ loop:
     call    get_char
     cp      0x1B
     jr      z,exit
-    out     (io_tmsdata),a
+    call    tms_put
     jr      loop
 exit:
     jp      0

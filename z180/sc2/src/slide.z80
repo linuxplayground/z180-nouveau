@@ -1,0 +1,293 @@
+INCLUDE "tms.inc"
+INCLUDE "tms_constants.inc"
+INCLUDE "stdio.inc"
+INCLUDE "nouveau.inc"
+INCLUDE "macros.inc"
+
+MACRO print addr
+        ld      c,C_WRITESTR
+        ld      de,addr
+        call    BDOS
+ENDM
+
+BDOS:           equ 5
+
+C_WRITESTR:     equ 9   ; C=9, DE=address of $ terminated string
+F_OPEN:         equ 15  ; C=0xF, DE=FCB Address, Errors returned in BA, HL
+F_CLOSE:        equ 16  ; C=0x10, DE=FCB Address, Errors in BA, HL
+F_SFIRST:       equ 17
+F_SNEXT:        equ 18
+F_READ:         equ 20  ; C=0x14, DE=FCB Address, Errros in BA, HL
+F_DMAOFF:       equ 26  ; C=0x1A, DE=Address
+BUFFER:         equ 0x1000
+LISTBUF:        equ 0x5000
+F_DR:           equ 0
+F_EX:           equ 12
+F_S1:           equ 13
+F_S2:           equ 14
+F_RC:           equ 15
+
+; BEGIN
+        org     0x100
+        ld      sp,stack
+main:
+        vb_loop:
+        in      a,(io_tmslatch)
+        or      0x80
+        jr      z,vb_loop
+
+        call    tms_init_g2
+
+        ld      c,tms_black
+        call    tms_set_backdrop_color
+
+        ld      hl,LISTBUF
+        ld      (cur_list_buf_ptr),hl
+
+        call    find_first
+        call    copy_fcb_to_list_buf
+loop:
+        call    find_next
+        cp      0xFF
+        jp      z,start_show
+        call    copy_fcb_to_list_buf
+        jp      loop
+
+start_show:
+        ld      hl,LISTBUF
+        ld      (cur_list_buf_ptr),hl
+show_loop:
+        call    open
+        call    read_file
+        call    vdp_write
+        dec8    file_count
+        or      a
+        jp      z,exit
+        call    delay
+
+        ld      hl,(cur_list_buf_ptr)
+        ld      bc,32
+        add     hl,bc
+        ld      (cur_list_buf_ptr),hl
+        jp      show_loop
+
+        ; DE must contain location of buffer
+setdma:
+        ld      c,F_DMAOFF
+        call    BDOS
+        ret
+
+        ; sets new_fcb_ptr on exit
+find_first:
+        ld      de,fcb_buf
+        call    setdma
+
+        call    initfcb
+
+        ld      c,F_SFIRST
+        ld      de,fcb
+        call    BDOS
+        cp      0xff
+        jp      nz,find_cont
+        print   find_err
+        jp      0
+
+find_next:
+        ld      de,fcb_buf
+        call    setdma
+        ld      c,F_SNEXT
+        call    BDOS
+        cp      0xff
+        jp      nz,find_cont
+        ret
+
+find_cont:
+        ld      h,0
+        ld      l,a
+        add     hl,hl
+        add     hl,hl
+        add     hl,hl
+        add     hl,hl
+        add     hl,hl
+        ld      bc,fcb_buf
+        add     hl,bc
+        ld      (new_fcb_ptr),hl
+        ret
+
+copy_fcb_to_list_buf:
+        ld      hl,(new_fcb_ptr)
+        ld      de,(cur_list_buf_ptr)
+        ld      bc,32
+        ldir
+
+        xor     a
+        ld      ix,(cur_list_buf_ptr)
+        ld      (ix+0),a
+        ld      (ix+F_EX),a
+        ld      (ix+F_S1),a
+        ld      (IX+F_S2),a
+        ld      (IX+F_RC),a
+        ld      (IX+33),a
+
+        ld      hl,(cur_list_buf_ptr)
+        ld      bc,32
+        add     hl,bc
+        ld      (cur_list_buf_ptr),hl
+        inc8    file_count
+        ret
+
+open:
+        xor     a
+        ld      ix,(cur_list_buf_ptr)
+        ld      (ix+0),a
+        ld      (ix+F_EX),a
+        ld      (ix+F_S1),a
+        ld      (IX+F_S2),a
+        ld      (IX+F_RC),a
+
+        ld      de,(cur_list_buf_ptr)
+        ld      c,F_OPEN
+        call    BDOS
+        cp      0xFF
+        jr      z,open_is_err
+        ret
+open_is_err:
+        call    hexdump_a
+        print   open_err
+        jp      exit
+
+close:
+        ld      c,F_CLOSE
+        ld      de,(cur_list_buf_ptr)
+        call    BDOS
+        ret
+
+initfcb:
+        xor     a       ; A = 0
+        ld      hl,fcb  ; Target is FCB
+        ld      b,36    ; 36 bytes
+initfcb_l1:
+        ld      (hl),a  ; save 0 into fcb at HL
+        inc     hl
+        dec     b
+        or      a
+        jr      nz,initfcb_l1
+        ld      hl,search
+        ld      de,fcb+1
+        ld      bc,11
+        ldir
+        ret
+
+read_file:
+        ld      de,BUFFER
+        ld      c,F_DMAOFF
+        call    BDOS
+
+        ld      de,BUFFER
+        push    de
+read_file_lp:
+        ld      c,F_READ
+        ld      de,(cur_list_buf_ptr)
+        call    BDOS
+        ; was it the end of file
+        or      a
+        jp      nz,eofile
+        ; get DE from the stack
+        pop     de
+        ; add 128
+        add     de,0x80
+        ; save back to stack
+        push    de
+        ; set new DMA
+        ld      c,F_DMAOFF
+        call    BDOS
+        ; loop
+        jp      read_file_lp
+eofile:
+        pop     de              ; stack is all good now
+        ret
+
+vdp_write:
+        ld      de,0
+        ld      hl,BUFFER + 7
+        ; HL now is at start of data
+        ld      bc,0x3800
+
+        in      a,(io_tmslatch)                    ; read the status register to reset the reg fsm
+        call    tms_set_write_address
+
+        ld      d,b
+        ld      e,c
+        ld      c,io_tmsdata
+
+        ld      a,d
+        or      a
+        jr      z,wr_resid
+        ld      b,0             ; 256 bytes
+wr_256:
+        otir
+        dec     d
+        jr      nz,wr_256
+
+wr_resid:
+        ; is there any residual ?
+        ld      a,e
+        or      a
+        jr      nz,wr_resid_cont
+        ret
+wr_resid_cont:
+        ld      b,e
+        otir
+        ret
+
+delay:
+        call    get_char
+        cp      0x1b
+        jp      z,exit
+        ld      b,180
+        call    tms_delay
+        ret
+
+hexdump_a:
+        push    af
+        srl     a
+        srl     a
+        srl     a
+        srl     a
+        call    hexdump_nib
+        pop     af
+        push    af
+        and     0x0f
+        call    hexdump_nib
+        ld      a,':'
+        call    puts
+        pop     af
+        ret
+
+hexdump_nib:
+        add     '0'
+        cp      '9'+1
+        jp      m,hexdump_num
+        add     'A'-'9'-1
+hexdump_num:
+        jp      puts
+
+exit:
+        jp      0
+;==============================================================================
+;       VARIABLES
+;==============================================================================
+search: db "????????SC2"
+open_err: db "OPEN FILE ERROR",10,13,"$"
+find_err: db "FIND FILE ERROR",10,13,"$"
+fcb:    ds 36,0
+new_fcb_ptr: dw 0
+cur_list_buf_ptr: dw 0
+file_count:     db 0
+file_count_total: db 0
+fcb_buf: ds 0x80,0
+;==============================================================================
+;       STACK
+;==============================================================================
+        ds      1024
+stack:  equ     $

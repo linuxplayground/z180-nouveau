@@ -1,11 +1,0 @@
---2025-02-20 22:39:12--  https://gitlab.com/SolderGirl/CPM3_2063_Retro/-/raw/main/Other/fnt6x8.z80?ref_type=heads
-Resolving gitlab.com (gitlab.com)... 2606:4700:90:0:f22e:fbec:5bed:a9b9, 172.65.251.78
-Connecting to gitlab.com (gitlab.com)|2606:4700:90:0:f22e:fbec:5bed:a9b9|:443... connected.
-HTTP request sent, awaiting response... 200 OK
-Length: 12581 (12K) [text/plain]
-Saving to: ‘fnt6x8.z80?ref_type=heads’
-
-fnt6x8.z80?ref_type=heads         0%[                                                     ]       0  --.-KB/s               fnt6x8.z80?ref_type=heads       100%[====================================================>]  12.29K  --.-KB/s    in 0.001s  
-
-2025-02-20 22:39:13 (16.9 MB/s) - ‘fnt6x8.z80?ref_type=heads’ saved [12581/12581]
-
