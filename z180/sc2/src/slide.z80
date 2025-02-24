@@ -10,6 +10,12 @@ MACRO print addr
         call    BDOS
 ENDM
 
+MACRO newline
+        ld      c,C_WRITESTR
+        ld      de,eol
+        call    BDOS
+ENDM
+
 BDOS:           equ 5
 
 C_WRITESTR:     equ 9   ; C=9, DE=address of $ terminated string
@@ -19,13 +25,12 @@ F_SFIRST:       equ 17
 F_SNEXT:        equ 18
 F_READ:         equ 20  ; C=0x14, DE=FCB Address, Errros in BA, HL
 F_DMAOFF:       equ 26  ; C=0x1A, DE=Address
+
+FCB:            equ 0x5C
+DEF_BUF:        equ 0x80
+
 BUFFER:         equ 0x1000
 LISTBUF:        equ 0x5000
-F_DR:           equ 0
-F_EX:           equ 12
-F_S1:           equ 13
-F_S2:           equ 14
-F_RC:           equ 15
 
 ; BEGIN
         org     0x100
@@ -45,13 +50,14 @@ main:
         ld      (cur_list_buf_ptr),hl
 
         call    find_first
-        call    copy_fcb_to_list_buf
+        call    copy_name_to_list_buf
 loop:
         call    find_next
         cp      0xFF
         jp      z,start_show
-        call    copy_fcb_to_list_buf
-        jp      loop
+        call    copy_name_to_list_buf
+        cp      0xFF            ; only allow 256 images
+        jr      nz,loop
 
 start_show:
         ld      hl,LISTBUF
@@ -59,6 +65,7 @@ start_show:
 show_loop:
         call    open
         call    read_file
+        call    close
         call    vdp_write
         dec8    file_count
         or      a
@@ -66,7 +73,7 @@ show_loop:
         call    delay
 
         ld      hl,(cur_list_buf_ptr)
-        ld      bc,32
+        ld      bc,12
         add     hl,bc
         ld      (cur_list_buf_ptr),hl
         jp      show_loop
@@ -79,13 +86,13 @@ setdma:
 
         ; sets new_fcb_ptr on exit
 find_first:
-        ld      de,fcb_buf
+        ld      de,DEF_BUF
         call    setdma
 
         call    initfcb
 
         ld      c,F_SFIRST
-        ld      de,fcb
+        ld      de,FCB
         call    BDOS
         cp      0xff
         jp      nz,find_cont
@@ -93,7 +100,7 @@ find_first:
         jp      0
 
 find_next:
-        ld      de,fcb_buf
+        ld      de,DEF_BUF
         call    setdma
         ld      c,F_SNEXT
         call    BDOS
@@ -109,50 +116,62 @@ find_cont:
         add     hl,hl
         add     hl,hl
         add     hl,hl
-        ld      bc,fcb_buf
+        ld      bc,DEF_BUF
         add     hl,bc
         ld      (new_fcb_ptr),hl
         ret
 
-copy_fcb_to_list_buf:
+copy_name_to_list_buf:
         ld      hl,(new_fcb_ptr)
         ld      de,(cur_list_buf_ptr)
-        ld      bc,32
+        ld      bc,12
         ldir
 
-        xor     a
-        ld      ix,(cur_list_buf_ptr)
-        ld      (ix+0),a
-        ld      (ix+F_EX),a
-        ld      (ix+F_S1),a
-        ld      (IX+F_S2),a
-        ld      (IX+F_RC),a
-        ld      (IX+33),a
-
         ld      hl,(cur_list_buf_ptr)
-        ld      bc,32
+        ld      bc,12
         add     hl,bc
         ld      (cur_list_buf_ptr),hl
         inc8    file_count
         ret
 
 open:
-        xor     a
-        ld      ix,(cur_list_buf_ptr)
-        ld      (ix+0),a
-        ld      (ix+F_EX),a
-        ld      (ix+F_S1),a
-        ld      (IX+F_S2),a
-        ld      (IX+F_RC),a
+        ;print filename
+        ld      hl,(cur_list_buf_ptr)
+        inc     hl
+        ld      de,text_buf
+        ld      bc,11
+        ldir
 
-        ld      de,(cur_list_buf_ptr)
+        ld      de,text_buf
+        ld      c,C_WRITESTR
+        call    BDOS
+
+        ; prep FCB for open - first copy name from list pointer
+        ; fill rest of FCB with zeros
+        ld      hl,FCB+12
+        ld      b,36
+        xor     a
+open_l1:
+        ld      (hl),a
+        inc     hl
+        djnz    open_l1
+
+        ; copy filename over
+        ld      hl,(cur_list_buf_ptr)
+        inc     hl
+        ld      de,FCB+1
+        ld      bc,11
+        ldir
+IF 0
+        call    debug_fcb
+ENDIF
         ld      c,F_OPEN
+        ld      de,FCB
         call    BDOS
         cp      0xFF
         jr      z,open_is_err
         ret
 open_is_err:
-        call    hexdump_a
         print   open_err
         jp      exit
 
@@ -163,19 +182,24 @@ close:
         ret
 
 initfcb:
-        xor     a       ; A = 0
-        ld      hl,fcb  ; Target is FCB
-        ld      b,36    ; 36 bytes
-initfcb_l1:
-        ld      (hl),a  ; save 0 into fcb at HL
-        inc     hl
-        dec     b
-        or      a
-        jr      nz,initfcb_l1
         ld      hl,search
-        ld      de,fcb+1
+        ld      de,FCB+1
         ld      bc,11
         ldir
+
+
+        ; fill rest of FCB with zeros
+        xor     a
+        ; drive
+        ld      hl,FCB
+        ld      (hl),a
+        ; everything else besides filename
+        ld      hl,FCB+12
+        ld      b,35-12
+initfcb_l1:
+        ld      (hl),a
+        inc     hl
+        djnz    initfcb_l1
         ret
 
 read_file:
@@ -187,7 +211,7 @@ read_file:
         push    de
 read_file_lp:
         ld      c,F_READ
-        ld      de,(cur_list_buf_ptr)
+        ld      de,FCB
         call    BDOS
         ; was it the end of file
         or      a
@@ -248,6 +272,25 @@ delay:
         call    tms_delay
         ret
 
+exit:
+        jp      0
+IF 0
+
+debug_fcb:
+        ld      hl,FCB
+        ld      b,36
+debug_fcb_lp:
+        ld      a,(hl)
+        push    bc
+        push    hl
+        call    hexdump_a
+        pop     hl
+        pop     bc
+        inc     hl
+        djnz    debug_fcb_lp
+        newline
+        ret
+
 hexdump_a:
         push    af
         srl     a
@@ -271,21 +314,20 @@ hexdump_nib:
         add     'A'-'9'-1
 hexdump_num:
         jp      puts
+ENDIF
 
-exit:
-        jp      0
 ;==============================================================================
 ;       VARIABLES
 ;==============================================================================
 search: db "????????SC2"
 open_err: db "OPEN FILE ERROR",10,13,"$"
 find_err: db "FIND FILE ERROR",10,13,"$"
-fcb:    ds 36,0
 new_fcb_ptr: dw 0
 cur_list_buf_ptr: dw 0
 file_count:     db 0
-file_count_total: db 0
-fcb_buf: ds 0x80,0
+text_buf:       ds 11,0
+eol:            db 10,13,"$"
+
 ;==============================================================================
 ;       STACK
 ;==============================================================================
