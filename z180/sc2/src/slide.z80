@@ -1,9 +1,9 @@
 INCLUDE "tms.inc"
 INCLUDE "tms_constants.inc"
-INCLUDE "stdio.inc"
 INCLUDE "nouveau.inc"
 INCLUDE "macros.inc"
 
+; useful macros
 MACRO print addr
         ld      c,C_WRITESTR
         ld      de,addr
@@ -16,139 +16,155 @@ MACRO newline
         call    BDOS
 ENDM
 
-BDOS:           equ 5
 
-C_WRITESTR:     equ 9   ; C=9, DE=address of $ terminated string
-F_OPEN:         equ 15  ; C=0xF, DE=FCB Address, Errors returned in BA, HL
-F_CLOSE:        equ 16  ; C=0x10, DE=FCB Address, Errors in BA, HL
-F_SFIRST:       equ 17
-F_SNEXT:        equ 18
-F_READ:         equ 20  ; C=0x14, DE=FCB Address, Errros in BA, HL
-F_DMAOFF:       equ 26  ; C=0x1A, DE=Address
+BDOS:           equ 5           ; bdos entry point
 
-FCB:            equ 0x5C
-DEF_BUF:        equ 0x80
+C_WRITESTR:     equ 9           ; C=9, DE=address of $ terminated string
+F_OPEN:         equ 15          ; C=0xF, DE=FCB Address, Errors returned in BA, HL
+F_CLOSE:        equ 16          ; C=0x10, DE=FCB Address, Errors in BA, HL
+F_SFIRST:       equ 17          ; C=0x11, DE=FCB containing search pattern, ERRORS in BA, HL
+F_SNEXT:        equ 18          ; C=0x12
+F_READ:         equ 20          ; C=0x14, DE=FCB Address, Errros in BA, HL
+F_DMAOFF:       equ 26          ; C=0x1A, DE=Address
 
-BUFFER:         equ 0x1000
-LISTBUF:        equ 0x5000
+FCB:            equ 0x5C        ; Default FCB
+DEF_BUF:        equ 0x80        ; Default sector buffer (0x80 bytes long)
+
+BUFFER:         equ 0x1000      ; Image data here.
+LISTBUF:        equ 0x5000      ; list of files here.
 
 ; BEGIN
         org     0x100
         ld      sp,stack
 main:
+        ; first make sure that we hit a vblank interrupt.  Useful to make sure the fpga state
+        ; is in good condition.  (probably not needed but here for good measure.)
         vb_loop:
         in      a,(io_tmslatch)
         or      0x80
         jr      z,vb_loop
 
+        ; set up vdp memory for G2.       (tms.inc)
         call    tms_init_g2
 
-        ld      c,tms_black
-        call    tms_set_backdrop_color
+        ld      c,tms_black             ; (tms_constants.inc)
+        call    tms_set_backdrop_color  ; (tms.inc)
 
-        ld      hl,LISTBUF
+        ld      hl,LISTBUF              ; initisalise the pointer into the file list.
         ld      (cur_list_buf_ptr),hl
 
-        call    find_first
-        call    copy_name_to_list_buf
+        call    find_first              ; search for the *.SC2 file.
+        call    copy_name_to_list_buf   ; copy the found file to the list.
+                                        ; XXX: Add error checking here.
+
+        ; start a loop to find the filenames of the remaining files
+        ; this is the main loop of the slideshow and it mainly calls other functions.
 loop:
-        call    find_next
-        cp      0xFF
-        jp      z,start_show
-        call    copy_name_to_list_buf
-        cp      0xFF            ; only allow 256 images
-        jr      nz,loop
+        call    find_next               ; Search for next file
+        cp      0xFF                    ; If search returns 0xFF in A then there are no more files.
+        jp      z,start_show            ; so start the slide show.
+        call    copy_name_to_list_buf   ; else copy the filename to the list.
+        cp      0xFF                    ; keep a running total of files.  Max is 256 files.
+        jr      nz,loop                 ; because I didn't want to deal with 16bit values.
 
+        ; Start the slide show by reseting the pointer to the list of files and iterating.
 start_show:
-        ld      hl,LISTBUF
+        ld      hl,LISTBUF              ; Set the pointer to the start of the list.
         ld      (cur_list_buf_ptr),hl
-show_loop:
-        call    open
-        call    read_file
-        call    close
-        call    vdp_write
-        dec8    file_count
-        or      a
+show_loop:                              ; loop
+        call    open                    ; call open file
+        call    read_file               ; call read file
+        call    close                   ; call close file
+        call    vdp_write               ; copy data from the image buffer to the VDP
+        dec8    file_count              ; decrement the file counter
+        or      a                       ; exit when zero.
         jp      z,exit
-        call    delay
+        call    delay                   ; wait some number of frames 
 
-        ld      hl,(cur_list_buf_ptr)
+        ld      hl,(cur_list_buf_ptr)   ; advance the file names list pointer
         ld      bc,12
         add     hl,bc
         ld      (cur_list_buf_ptr),hl
-        jp      show_loop
+        jp      show_loop               ; loop
 
-        ; DE must contain location of buffer
+        ; Call this function by setting DE to the required DMA address first.
+        ; hardly worth having this function at all TBH.
 setdma:
         ld      c,F_DMAOFF
         call    BDOS
         ret
 
-        ; sets new_fcb_ptr on exit
+        ; The CPM search sequence requires that a search with a given FCB is
+        ; performed and then subsequent searches can be made after.
 find_first:
-        ld      de,DEF_BUF
-        call    setdma
+        ld      de,DEF_BUF              ; I don't know if the DMA needs to be set if its default.
+        call    setdma                  ; setting it here to be explicit.
 
-        call    initfcb
+        call    initfcb                 ; set up the default FCB with the search string
 
-        ld      c,F_SFIRST
+        ld      c,F_SFIRST              ; Call the F_SFIRST BDOS routine
         ld      de,FCB
         call    BDOS
-        cp      0xff
-        jp      nz,find_cont
-        print   find_err
+
+        cp      0xff                    ; if BDOS returns 0xFF in A, then the file was not found.
+        jp      nz,find_cont            ; else carry on.
+        print   find_err                ; print the error message and bail.
         jp      0
 
 find_next:
-        ld      de,DEF_BUF
-        call    setdma
-        ld      c,F_SNEXT
-        call    BDOS
-        cp      0xff
-        jp      nz,find_cont
-        ret
+        ld      de,DEF_BUF              ; I don't know if this DMA needs to be set if its default.
+        call    setdma                  ; setting it here to be explicit.
 
-find_cont:
-        ld      h,0
-        ld      l,a
-        add     hl,hl
+        ld      c,F_SNEXT               ; BDOS F_SNEXT can only be called after a call to F_SFIRST
+        call    BDOS                    ; it does not need a DE argument.
+
+        cp      0xff                    ; If BDOS returns an error, we assume there are no more files.
+        jp      nz,find_cont            ; else carry on
+        ret                             ; return if no more files.
+
+find_cont:                              ; CARRYING ON
+        ld      h,0                     ; The two search routines (F_SFIRST and F_SNEXT) will return a
+        ld      l,a                     ; value of 0-3 in A.  Use the value in A to find the directory
+        add     hl,hl                   ; entry in the DMA buffer.  It can be found by (DMABUFF + (A * 32))
         add     hl,hl
         add     hl,hl
         add     hl,hl
         add     hl,hl
         ld      bc,DEF_BUF
         add     hl,bc
-        ld      (new_fcb_ptr),hl
-        ret
+        ld      (new_fcb_ptr),hl        ; store the start of the directory intery into a poorly named
+        ret                             ; pointer.
 
+        ; routine to copy the file name pointed to by `new_fcb_ptr` into the list of filenames
+        ; advances the pointer after copying and increments the file counter.
 copy_name_to_list_buf:
-        ld      hl,(new_fcb_ptr)
+        ld      hl,(new_fcb_ptr)        ; copy 12 bytes of data from the found directory entry
         ld      de,(cur_list_buf_ptr)
         ld      bc,12
         ldir
 
-        ld      hl,(cur_list_buf_ptr)
+        ld      hl,(cur_list_buf_ptr)   ; advance the list pointer by 12 bytes
         ld      bc,12
         add     hl,bc
         ld      (cur_list_buf_ptr),hl
-        inc8    file_count
+        inc8    file_count              ; increment the file_counter
         ret
 
+        ; routine to print the filename, prep the FCB for open and open.
 open:
-        ;print filename
-        ld      hl,(cur_list_buf_ptr)
-        inc     hl
+        ld      hl,(cur_list_buf_ptr)   ; use the list pointer to copy 11 bytes of data (the filename)
+        inc     hl                      ; into a buffer for printing.  The buffer is already "$" terminated.
         ld      de,text_buf
         ld      bc,11
         ldir
 
-        ld      de,text_buf
+        ld      de,text_buf             ; Call the BDOS routine for writing a "$" terminated string.
         ld      c,C_WRITESTR
         call    BDOS
 
         ; prep FCB for open - first copy name from list pointer
         ; fill rest of FCB with zeros
-        ld      hl,FCB+12
+        ld      hl,FCB                  ; First thing we do is write zeros to the FCB.
         ld      b,36
         xor     a
 open_l1:
@@ -156,128 +172,122 @@ open_l1:
         inc     hl
         djnz    open_l1
 
-        ; copy filename over
+        ; copy filename over            ; then copy the filename into the right place in the FCB
         ld      hl,(cur_list_buf_ptr)
         inc     hl
         ld      de,FCB+1
         ld      bc,11
         ldir
-IF 0
+IF 0                                    ; Debugging disabled.  Enable with `IF 1`
         call    debug_fcb
 ENDIF
-        ld      c,F_OPEN
-        ld      de,FCB
+        ld      c,F_OPEN                ; call the BDOS F_OPEN routine to open the file
+        ld      de,FCB                  ; described in FCB.
         call    BDOS
-        cp      0xFF
+        cp      0xFF                    ; If bdos returns 0xFF in A then we have an error.
         jr      z,open_is_err
-        ret
+        ret                             ; else return
 open_is_err:
-        print   open_err
-        jp      exit
+        print   open_err                ; print error message
+        jp      exit                    ; bail.
 
 close:
-        ld      c,F_CLOSE
+        ld      c,F_CLOSE               ; BDOS close routine.
         ld      de,(cur_list_buf_ptr)
         call    BDOS
         ret
 
-initfcb:
-        ld      hl,search
-        ld      de,FCB+1
-        ld      bc,11
-        ldir
-
-
-        ; fill rest of FCB with zeros
-        xor     a
+initfcb:                                ; sets up the FCB for F_SFIRST. (Find first)
+        xor     a                       ; fill the whole FCB out with zeros first.
         ; drive
         ld      hl,FCB
-        ld      (hl),a
-        ; everything else besides filename
-        ld      hl,FCB+12
-        ld      b,35-12
+        ld      b,36
 initfcb_l1:
         ld      (hl),a
         inc     hl
         djnz    initfcb_l1
+
+        ld      hl,search               ; copy the search string ????????SC2 into the FCB
+        ld      de,FCB+1
+        ld      bc,11
+        ldir
+
         ret
 
-read_file:
-        ld      de,BUFFER
-        ld      c,F_DMAOFF
-        call    BDOS
+read_file:                              ; routine will use the BDOS Sequential Read routine to
+        ld      de,BUFFER               ; fill up the image buffer with data from the file in
+        ld      c,F_DMAOFF              ; 128 byte increments.  First set the DMA to the start
+        call    BDOS                    ; of the image buffer.
 
-        ld      de,BUFFER
-        push    de
+        ld      de,BUFFER               ; The current pointer (for DMA operations) is saved in DE
+        push    de                      ; and pushed to the stack.
 read_file_lp:
-        ld      c,F_READ
-        ld      de,FCB
-        call    BDOS
-        ; was it the end of file
-        or      a
+        ld      c,F_READ                ; call the BDOS read function.  This function fills the DMA
+        ld      de,FCB                  ; with 128 bytes from the file and preps the FCB for the next
+        call    BDOS                    ; sequential read call.
+
+        or      a                       ; if the result of read was not 0 then assume end of file.
         jp      nz,eofile
-        ; get DE from the stack
-        pop     de
-        ; add 128
-        add     de,0x80
-        ; save back to stack
-        push    de
-        ; set new DMA
-        ld      c,F_DMAOFF
+
+        pop     de                      ; restroe the DMA address from the stack
+        add     de,0x80                 ; add 128 bytes to it
+        push    de                      ; save back to the stack
+
+        ld      c,F_DMAOFF              ; set a new DMA (128 bytes advanced from previous)
         call    BDOS
-        ; loop
-        jp      read_file_lp
+
+        jp      read_file_lp            ; loop.
 eofile:
-        pop     de              ; stack is all good now
-        ret
+        pop     de                      ; end of file reached.  We need to pop DE again to clear
+        ret                             ; not have stuff on the stack that should not be there.
 
-vdp_write:
-        ld      de,0
-        ld      hl,BUFFER + 7
-        ; HL now is at start of data
-        ld      bc,0x3800
+vdp_write:                              ; routine to write the data from disk over to the VDP memory.
+        ld      de,0                    ; start at VDP addrss 0
+        ld      hl,BUFFER + 7           ; copy data from the image buffer + 7 bytes
+        ld      bc,0x3800               ; copy all 0x3800 bytes of data.
 
-        in      a,(io_tmslatch)                    ; read the status register to reset the reg fsm
-        call    tms_set_write_address
+        in      a,(io_tmslatch)         ; read the status register to reset the reg fsm
+        call    tms_set_write_address   ; set the write address to DE (tms.inc)
 
-        ld      d,b
+        ld      d,b                     ; Copy BC into DE
         ld      e,c
-        ld      c,io_tmsdata
+        ld      c,io_tmsdata            ; Set the output port (prepping for OTIR)
 
-        ld      a,d
+        ld      a,d                     ; check if D is zero.  if so copy the last page.
         or      a
         jr      z,wr_resid
-        ld      b,0             ; 256 bytes
+        ld      b,0                     ; OTIR copy the data at HL to IO port at C, decrement B, repeat until B = 0
+                                        ; When B starts at 0, then it goes 256 times.
 wr_256:
-        otir
+        otir                            ; Keep going, decrement D each time until D = 0
         dec     d
         jr      nz,wr_256
-
-wr_resid:
-        ; is there any residual ?
-        ld      a,e
+wr_resid:                               ; last page of data.
+        ld      a,e                     ; check if there is any more data to copy?
         or      a
-        jr      nz,wr_resid_cont
-        ret
+        jr      nz,wr_resid_cont        ; if so then carry on.
+        ret                             ; otherwise done.
 wr_resid_cont:
-        ld      b,e
-        otir
-        ret
+        ld      b,e                     ; copy E into b ( we need to copy this many more bytes)
+        otir                            ; HL has been properly incremented with each round of OTIRs.
+        ret                             ; when done, return
 
+        ; Simple delay routine using the TMS interrupt signal for timing.
 delay:
-        call    get_char
-        cp      0x1b
-        jp      z,exit
-        ld      b,180
-        call    tms_delay
+        call    get_char                ; check if a character is waiting in the ASCI buffer.
+        cp      0x1b                    ; was it ESCAPE?
+        jp      z,exit                  ; if yes, then bail.
+        ld      b,180                   ; wait for 180 TMS Vertical frames before continuing
+        call    tms_delay               ; (tms.inc)
         ret
 
 exit:
-        jp      0
-IF 0
+        jp      0                       ; cold start
+
+IF 0                                    ; debugging disabled, enable with IF 1
 
 debug_fcb:
-        ld      hl,FCB
+        ld      hl,FCB                  ; prints all 36 bytes of the FCB in HEX.
         ld      b,36
 debug_fcb_lp:
         ld      a,(hl)
@@ -319,14 +329,14 @@ ENDIF
 ;==============================================================================
 ;       VARIABLES
 ;==============================================================================
-search: db "????????SC2"
-open_err: db "OPEN FILE ERROR",10,13,"$"
-find_err: db "FIND FILE ERROR",10,13,"$"
-new_fcb_ptr: dw 0
-cur_list_buf_ptr: dw 0
-file_count:     db 0
-text_buf:       ds 11,0
-eol:            db 10,13,"$"
+search:         db "????????SC2"                ; CPM search string.  ? are wild.
+open_err:       db "OPEN FILE ERROR",10,13,"$"  ; Strings.
+find_err:       db "FIND FILE ERROR",10,13,"$"
+new_fcb_ptr:    dw 0                            ; pointer used in generating list
+cur_list_buf_ptr: dw 0                          ; list iterration pointer
+file_count:     db 0                            ; file counter
+text_buf:       ds 11,0                         ; text buffer for printing filenames
+eol:            db 10,13,"$"                    ; ends with new line and "$" termination.
 
 ;==============================================================================
 ;       STACK
