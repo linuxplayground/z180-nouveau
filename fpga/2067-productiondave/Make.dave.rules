@@ -1,0 +1,8 @@
+# rules that are specific to the 2057-ICE40HX4K-TQ144-breakout board
+# for nextpnr, set DEVICE = hx8k
+
+DEVICE		= hx8k
+PACKAGE		= tq144:4k
+FLASH_PROG	= sudo $(TOP)/2067-productiondave/prog-2057-flash.sh
+PINMAP		= $(TOP)/2067-productiondave/pinmap-2057.pcf
+FREQ		= 25

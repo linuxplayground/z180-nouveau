@@ -69,14 +69,12 @@ module top (
     output  wire [0:11] rgb,
     output  wire        vga_hsync,
     output  wire        vga_vsync,
-
     input   wire [7:0]  A8
- //   output wire [15:0]  tp          // handy-dandy test-point outputs
     );
 
     localparam RAM_START = 20'h1000;
 
-//    assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
+    //assign tp = { iorq_wr_tick, iorq_rd_tick, phi, e, iorq_n, we_n, oe_n, ce_n, wr_n, rd_n, mreq_n, m1_n };
     //            93            90            87   84 82      80    78    75    73    63    61      56
 
 
@@ -109,9 +107,9 @@ module top (
 
         (* parallel_case *)     // no more than one case can match (one-hot)
         case (1)
-        mreq_rom:       dout = rom_data;            // CPU reading boot ROM memory
-        ioreq_rd_f0:    dout = ioreq_rd_f0_data;    // CPU reading gpio input
-        ioreq_rd_vdp:   dout = vdp_dout;
+        mreq_rom:       dout = rom_data;            // boot ROM memory
+        ioreq_rd_f0:    dout = ioreq_rd_f0_data;    // gpio input
+        ioreq_rd_vdp:   dout = vdp_dout;            // data from the VDP
         ioreq_rd_j3_tick: dout = ioreq_rd_j3_data;  // CPU reading joystick
         default:        dbus_out = 0;
         endcase
@@ -163,8 +161,6 @@ module top (
     always @(negedge phi) begin
         if ( ioreq_wr_f1_tick )
             gpio_out <= d;
-        if ( ioreq_rd_j3_tick)
-            ioreq_rd_j3_data <= A8;
     end
 
     // It is not really necessary to latch this because the SD signals will be stable during a read:
@@ -173,8 +169,8 @@ module top (
     always @(negedge phi) begin
         if ( ioreq_rd_f0_tick )
             ioreq_rd_f0_data <= {sd_miso,sd_det,6'bx};
-        if ( ioreq_rd_j3_tick)
-            ioreq_rd_j3_data <= A8;
+        if (ioreq_rd_j3_tick)
+            ioreq_rd_j3_data  <= A8;
     end
 
     assign sd_mosi = gpio_out[0];   // connect the GPIO output bits to the SD card pins
@@ -217,20 +213,29 @@ module top (
         .irq(vdp_irq),
         .cpu_wr(ioreq_wr_vdp),
         .cpu_rd(ioreq_rd_vdp),
-        .color(rgb),
+        .color(vdp_color),
         .hsync(vdp_hsync),
         .vsync(vdp_vsync)
     );
 
+
+    color_palette palette (
+        .color(vdp_color),
+        .rgb(rgb),
+    );
+/*
     // XXX a hack for now.  Need a decoder & 6-bit DAC for TI99 VDP colors 
+    assign vga_red = { vdp_color[2], vdp_color[2] };
+    assign vga_grn = { vdp_color[1], vdp_color[1] };
+    assign vga_blu = { vdp_color[0], vdp_color[0] };
+*/
     assign vga_hsync = ~vdp_hsync;
     assign vga_vsync = ~vdp_vsync;
 
-
     wire ioreq_rd_j3 = iorq_rd && (a[7:0] == 8'ha8);
     wire ioreq_rd_j3_tick = iorq_rd_tick && (a[7:0] == 8'ha8);      // joystick J3
-
-/*    wire ioreq_rd_j4 = iorq_rd && (a[7:0] == 8'ha9);
+/*
+    wire ioreq_rd_j4 = iorq_rd && (a[7:0] == 8'ha9);
     wire ioreq_rd_j4_tick = iorq_rd_tick && (a[7:0] == 8'ha9);      // joystick J4
 */
 

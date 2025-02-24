@@ -72,7 +72,6 @@ module tb ();
     //      vdp_reg <= 3;
     //      vdp_reg_value <= 12;
     //      do_reg_write <= 1;
-    //      @(posedge phi);
     //      @(negedge do_reg_write);        // wait for this to set it back to 0
 
     reg [2:0]   vdp_reg         = 0;
@@ -193,9 +192,10 @@ module tb ();
         @(negedge do_reg_write);
 
         vdp_reg <= 1;
-        vdp_reg_value <= 'h40;      // graphics mode 1, enable screen
-        //vdp_reg_value <= 'h50;      // text mode, enable screen
-        //vdp_reg_value <= 'h40;      // graphics mode 2, enable screen
+        //vdp_reg_value <= 'h60;      // graphics mode 1, enable screen, IE
+        vdp_reg_value <= 'h70;      // text mode, enable screen, IE
+        //vdp_reg_value <= 'h50;      // text mode, enable screen, IE=0
+        //vdp_reg_value <= 'h60;      // graphics mode 2, enable screen, IE
         do_reg_write <= 1;
         @(negedge do_reg_write);
 

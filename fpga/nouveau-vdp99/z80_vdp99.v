@@ -19,6 +19,9 @@
 //
 //**************************************************************************
 
+
+// The purpose of this module is to connect the CPU clock domain to the VDP clock domain.
+
 `default_nettype none
 
 module z80_vdp99 #(
@@ -35,7 +38,7 @@ module z80_vdp99 #(
     input wire          cpu_wr,         // async CPU signal
     input wire          cpu_rd,         // async CPU signal
     
-    output wire [11:0]   color,
+    output wire [3:0]   color,
     output wire         hsync,
     output wire         vsync,
     output wire         irq             // Note: The IRQ is an async signal in the CPU domain

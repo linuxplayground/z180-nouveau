@@ -17,12 +17,15 @@ TBFILES= \
 	memory.v \
 	$(LIB_VDP99_FILES) \
 	$(LIB_UTILS_FILES) \
+	color_palette.v\
 	z80_vdp99.v
 
 FILES=\
 	top.v \
 	$(TBFILES) \
 	pll_25_18432.v
+
+-include $(TOP)/Make.local
 
 all:: top.bin
 
@@ -55,6 +58,6 @@ pll_25_18432.v:
 z80_vdp99_tb.vvp: $(TBFILES) z80_vdp99_tb.v
 	iverilog -o $@ $^
 
-z80_vdp99_tb: z80_vdp99_tb.vcd
+z80_vdp99: z80_vdp99_tb.vcd
 	gtkwave $^
 

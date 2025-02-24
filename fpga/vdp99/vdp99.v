@@ -34,7 +34,7 @@ module vdp99 #(
     output  wire [7:0]  dout,       // valid during wr_tick and rd_tick
     output  wire        irq,
 
-    output  wire [11:0]  color,      // 4-bit color output
+    output  wire [3:0]  color,      // 4-bit color output
     output  wire        hsync,
     output  wire        vsync
     );
@@ -73,18 +73,18 @@ module vdp99 #(
         .r7(regs[7])
     );
 
+    wire irq_status;
+    wire irq_tick = last_pixel;
+
     vdp_irq virq (
         .clk(pxclk),
         .reset(reset),
         .irq_tick(irq_tick),
         .rd_tick(rd_tick && mode==1),
-        .irq(irq)
+        .irq(irq_status)
     );
 
-    wire irq_tick = last_pixel;
-
-
-    // XXX the rd_tick has to be buffered to fit into the FSM timing
+    // XXX the CPU's rd_tick probably has to be buffered to fit into the FSM timing
 
     wire [VRAM_ADDR_WIDTH-1:0] dma_addr;
     wire dma_rd_tick;
@@ -106,6 +106,7 @@ module vdp99 #(
     wire [9:0] col;
     wire [9:0] row;
     wire vid_active;
+    wire vid_active0;
     wire col_last;
     wire row_last;
     wire last_pixel;
@@ -116,11 +117,13 @@ module vdp99 #(
     vgasync v (
         .reset(reset),
         .clk(pxclk),
+        .text_mode(vdp_mode==3'b100),
         .hsync(hsync_in),
         .vsync(vsync_in),
         .col(col),
         .row(row),
         .vid_active(vid_active),
+        .vid_active0(vid_active0),
         .col_last(col_last),
         .row_last(row_last),
         .bdr_active(bdr_active),
@@ -161,6 +164,7 @@ module vdp99 #(
         .hsync(hsync_in),
         .vsync(vsync_in),
         .vid_active(vid_active),
+        .vid_active0(vid_active0),
         .bdr_active(bdr_active),
         .last_pixel(last_pixel),
         .col_last(col_last),
@@ -190,34 +194,13 @@ module vdp99 #(
             endcase
         end
     end
-    //
-    // colours
-    reg [11:0] palette[0:15];
-    initial begin
-        palette[0] =  12'h000;    // trasnparent
-        palette[1] =  12'h000;    // black
-        palette[2] =  12'h2C3;    // medium green
-        palette[3] =  12'h5D6;    // light green
-        palette[4] =  12'h54F;    // dark blue
-        palette[5] =  12'h76F;    // light blue
-        palette[6] =  12'hD54;    // dark red
-        palette[7] =  12'h4EF;    // cyan
-        palette[8] =  12'hF54;    // medium red
-        palette[9] =  12'hF76;    // light red
-        palette[10] = 12'hDC3;    // dark yellow
-        palette[11] = 12'hED6;    // light yellow
-        palette[12] = 12'h2B2;    // dark green
-        palette[13] = 12'hC5C;    // magenta
-        palette[14] = 12'hCCC;    // grey
-        palette[15] = 12'hFFF;    // white
-    end
 
-
-    assign color = palette[color_reg];
+    assign color = color_reg;
     assign hsync = hsync_out;
     assign vsync = vsync_out;
 
-    wire [7:0]  vdp_status = { irq, 7'b0 };
+    assign irq = vdp_ie ? irq_status : 0;
+    wire [7:0]  vdp_status = { irq_status, 7'b0 };
 
     // XXX fix this so don't send vram_dout from the last fsm DMA access! 
     assign dout = rd_tick ? (mode==0 ? vram_dout : vdp_status ) : 'hx;
