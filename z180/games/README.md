@@ -14,8 +14,7 @@ x rotate clockwise
 . move right
 SPACE drop
 
-## z180retro-lib
+## z180nouveau-lib
 
-A port of NABU-LIB is available at
-[https://github.com/linuxplayground/z80retro-lib](https://github.com/linuxplayground/z80retro-lib)
-and is used in this project to cross-compile these games for the Z80_Retro.
+A port of NABU-LIB is available at and is used in this project to cross-compile
+these games for the z180-Nouveau.

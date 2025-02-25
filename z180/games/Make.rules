@@ -1,5 +1,5 @@
 
-CLEAN_DIRS=$(SUBDIRS:%=clean-%)
+LEAN_DIRS=$(SUBDIRS:%=clean-%)
 ALL_DIRS=$(SUBDIRS:%=all-%)
 
 .PHONY: all clean release $(CLEAN_DIRS) $(ALL_DIRS)
@@ -21,4 +21,3 @@ ZCC = $(Z88DIR)/bin/zcc
 export PATH := $(Z88DIR)/bin/:$(PATH)
 export ZCCCFG := $(Z88DIR)/lib/config
 
-GIT_TAG=$(shell git describe --exact-match --tags --abbrev=0)

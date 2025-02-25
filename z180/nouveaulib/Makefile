@@ -1,5 +1,5 @@
 TOP = .
-LIBS = stdio.lib stdlib.lib strings.lib tms.lib platform.lib
+LIBS = stdio.lib stdlib.lib strings.lib tms.lib nouveau.lib debug.lib
 INCLUDES = -Iheaders
 
 .PHONY: all

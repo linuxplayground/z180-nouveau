@@ -9,6 +9,12 @@
 
 FILE * fp;
 
+void add_pattern(uint8_t* pat, uint8_t pat_num) {
+    vdp_setWriteAddress(_vdpPatternGeneratorTableAddr + (pat_num * 8));
+    for(uint8_t i=0; i<8; i++) {
+        IO_VDPDATA = pat[i];
+    }
+}
 
 /* Set up the graphics, audio and vdp interrupts.*/
 void init(void) {
@@ -16,18 +22,14 @@ void init(void) {
     vdp_clearVRAM();
     vdp_initG1Mode(1, false, false, false, false);
     vdp_loadPatternTable(FAT,0x330);
-    vdp_setWriteAddress(_vdpColorTableAddr);
-    vdp_setPatternColor(0x41);
-    vdp_setBackDropColor(VDP_DARK_YELLOW);                         //Set border color
-
-    // overwrite special colours.
-    vdp_colorizePattern(APPLE,      VDP_LIGHT_GREEN, VDP_BLACK);   //Apple
-    vdp_colorizePattern(HEAD_UP,    VDP_MAGENTA,     VDP_BLACK);   //Snake head
-    vdp_colorizePattern(HEAD_DOWN,  VDP_MAGENTA,     VDP_BLACK);   //Snake head
-    vdp_colorizePattern(HEAD_LEFT,  VDP_MAGENTA,     VDP_BLACK);   //Snake head
-    vdp_colorizePattern(HEAD_RIGHT, VDP_MAGENTA,     VDP_BLACK);   //Snake head
-
-    //vdp_enableVDPReadyInt();
+    vdp_loadColorTable(colors,32);
+    vdp_setBackDropColor(VDP_DARK_YELLOW);
+    // add snake patterns
+    add_pattern(snake_pat_up, 0x81); // up
+    add_pattern(snake_pat_down, 0x82); // down
+    add_pattern(snake_pat_left, 0x83); // left
+    add_pattern(snake_pat_right, 0x84); // right
+    add_pattern(snake_pat_apple, 0x88); // apple
 }
 
 /* Display the menu and then wait for the user to either exit (false) or continue (true)*/
@@ -50,16 +52,20 @@ bool menu(void) {
     vdp_waitVDPReadyInt();
     tmp = IO_VDPLATCH;  //dummy read
     vdp_waitVDPReadyInt();
-    vdp_refreshViewPort(); 
+    vdp_refreshViewPort();
     while(true) {
-        if (getJoyStatus() & Joy_Button)
+        if (getJoyStatus() & Joy_Button) {
+            inp_joy = true;
             return true;
+        }
         if (isKeyPressed()) {
             uint8_t _key = getChar();
             if(_key == 0x1b)
                 return false;
-            if(_key == ' ')
+            if(_key == ' ') {
+                inp_joy = false;
                 return true;
+            }
         }
     }
 }
@@ -162,7 +168,7 @@ void game(void) {
         if (pause) {
             bool flash = false;
             while(true) {
-                if (isKeyPressed()) {
+                if (isKeyPressed() || getJoyStatus() & Joy_Button) {
                     pause = false;
                     break;
                 }
@@ -179,37 +185,39 @@ void game(void) {
             vdp_setCharAtLocationBuf(head.x, head.y, 0x00);
         } else {
         //if not paused
-            /*if( (getJoyStatus() & Joy_Left) && (head.dir != HEAD_RIGHT)) {
-                head.dir = HEAD_LEFT;
-                head.pattern = HEAD_LEFT;
-            }
-            else if( (getJoyStatus() & Joy_Up) && (head.dir != HEAD_DOWN)) {
-                head.dir = HEAD_UP;
-                head.pattern = HEAD_UP;
-            }
-            else if( (getJoyStatus() & Joy_Right) && (head.dir != HEAD_LEFT)) {
-                head.dir = HEAD_RIGHT;
-                head.pattern = HEAD_RIGHT;
-            }
-            else if( (getJoyStatus() & Joy_Down) && (head.dir != HEAD_UP)) {
-                head.dir = HEAD_DOWN;
-                head.pattern = HEAD_DOWN;
-            }
-            */
-            if ( (isKeyPressed() ) ) {
-                uint8_t _key = getChar();
-                if(_key == 'a' || _key == 'A') {
+            if (inp_joy) {
+                if( (getJoyStatus() & Joy_Left) && (head.dir != HEAD_RIGHT)) {
                     head.dir = HEAD_LEFT;
                     head.pattern = HEAD_LEFT;
-                } else if (_key == 'w' || _key == 'W') {
+                }
+                else if( (getJoyStatus() & Joy_Up) && (head.dir != HEAD_DOWN)) {
                     head.dir = HEAD_UP;
                     head.pattern = HEAD_UP;
-                } else if (_key == 'd' || _key == 'D') {
+                }
+                else if( (getJoyStatus() & Joy_Right) && (head.dir != HEAD_LEFT)) {
                     head.dir = HEAD_RIGHT;
                     head.pattern = HEAD_RIGHT;
-                } else if (_key == 's' || _key == 'S') {
+                }
+                else if( (getJoyStatus() & Joy_Down) && (head.dir != HEAD_UP)) {
                     head.dir = HEAD_DOWN;
                     head.pattern = HEAD_DOWN;
+                }
+            } else {
+                if ( (isKeyPressed() ) ) {
+                    uint8_t _key = getChar();
+                    if(_key == 'a' || _key == 'A') {
+                        head.dir = HEAD_LEFT;
+                        head.pattern = HEAD_LEFT;
+                    } else if (_key == 'w' || _key == 'W') {
+                        head.dir = HEAD_UP;
+                        head.pattern = HEAD_UP;
+                    } else if (_key == 'd' || _key == 'D') {
+                        head.dir = HEAD_RIGHT;
+                        head.pattern = HEAD_RIGHT;
+                    } else if (_key == 's' || _key == 'S') {
+                        head.dir = HEAD_DOWN;
+                        head.pattern = HEAD_DOWN;
+                    }
                 }
             }
 
@@ -240,7 +248,7 @@ void game(void) {
                     new_apple();
                     apples_eaten ++;
                     score = score + abs(apples_eaten / 10) + 1;
-                    
+
                     if (apples_eaten % 10 == 0 && apples_eaten > 20 && game_speed > 5) {
                         game_speed --;
                     }

@@ -1,3 +1,4 @@
+; vim: set ft=z80 :
 #ifndef NABU_GAMES_PATTERNS_H
 #define NABU_GAMES_PATTERNS_H
 

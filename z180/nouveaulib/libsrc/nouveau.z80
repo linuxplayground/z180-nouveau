@@ -1,5 +1,5 @@
 public io_tmslatch, io_tmsdata
-public is_key_pressed, joy_status, joy_map_left, joy_map_right, joy_map_up, joy_map_down, joy_map_button
+public is_key_pressed, joy_status
 public get_char
 public get_joy_status
 public tms_wait

@@ -7,11 +7,3 @@ CFLAGS = +cpm -mz180 -DBIN_TYPE=BIN_CPM --list -compiler=sdcc -create-app -O3 --
 
 MKDIR = mkdir -pv
 
-# G Drive is Slot 6.
-DISK_SLOT = 6
-
-# For normal use on a plain Raspberry PI
-SD_DEV=/dev/sda1
-
-# This is used before burning an SD card image to make sure we are on the correct host!
-SD_HOSTNAME=raspberrypi
