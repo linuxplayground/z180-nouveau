@@ -1,6 +1,6 @@
-public cpm_terminate, fillmem, random
+        public  cpm_terminate, fillmem, random
 
-section LIB
+        section LIB
 ;===============================================================================
 ; Jumpt to CPM Warm Boot vector
 ; INPUT: void
@@ -17,9 +17,9 @@ cpm_terminate:
 ; CLOBBERS: hl, de
 ;===============================================================================
 fillmem:
-        ld      (hl),a
-        ld      e,l
-        ld      d,h
+        ld      (hl), a
+        ld      e, l
+        ld      d, h
         inc     de
         dec     bc
         ldir
@@ -31,18 +31,18 @@ fillmem:
 ; OUTPUT: A = Random Number 0 <=a<=255
 ; CLOBBERS: AF
 ;===============================================================================
-seed:   dw 0x1147
+seed:   dw      0x1147
 random:
         push    hl
         push    de
-        ld      hl,(seed)
-        ld      a,r
-        ld      d,a
-        ld      e,(hl)
-        add     hl,de
-        add     a,l
+        ld      hl, (seed)
+        ld      a, r
+        ld      d, a
+        ld      e, (hl)
+        add     hl, de
+        add     a, l
         xor     h
-        ld      (seed),hl
+        ld      (seed), hl
         pop     de
         pop     hl
         ret

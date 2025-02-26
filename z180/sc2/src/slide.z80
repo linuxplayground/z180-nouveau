@@ -214,31 +214,28 @@ initfcb_l1:
 
         ret
 
-read_file:                              ; routine will use the BDOS Sequential Read routine to
-        ld      de,BUFFER               ; fill up the image buffer with data from the file in
-        ld      c,F_DMAOFF              ; 128 byte increments.  First set the DMA to the start
-        call    BDOS                    ; of the image buffer.
-
-        ld      de,BUFFER               ; The current pointer (for DMA operations) is saved in DE
-        push    de                      ; and pushed to the stack.
+read_file:
+        ld      de,BUFFER               ; start of image buffer
 read_file_lp:
-        ld      c,F_READ                ; call the BDOS read function.  This function fills the DMA
-        ld      de,FCB                  ; with 128 bytes from the file and preps the FCB for the next
-        call    BDOS                    ; sequential read call.
-
-        or      a                       ; if the result of read was not 0 then assume end of file.
-        jp      nz,eofile
-
-        pop     de                      ; restroe the DMA address from the stack
-        add     de,0x80                 ; add 128 bytes to it
-        push    de                      ; save back to the stack
-
-        ld      c,F_DMAOFF              ; set a new DMA (128 bytes advanced from previous)
+        push    de                      ; save image buffer pointer
+        ld      c,F_DMAOFF              ; set dma to image buffer, pointer is in DE
         call    BDOS
 
-        jp      read_file_lp            ; loop.
+        ld      de,FCB                  ; read the next record from the file
+        ld      c,F_READ
+        call    BDOS
+
+        pop     de                      ; restore image buffer pointer
+
+        or      a                       ; check for error, assume EOF
+        jr      nz,eofile
+
+        ld      hl,0x80                 ; add 128 to the image buffer pointer
+        add     hl,de
+        ex      de,hl
+        jr      read_file_lp
+
 eofile:
-        pop     de                      ; end of file reached.  We need to pop DE again to clear
         ret                             ; not have stuff on the stack that should not be there.
 
 vdp_write:                              ; routine to write the data from disk over to the VDP memory.

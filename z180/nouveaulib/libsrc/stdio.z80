@@ -1,27 +1,29 @@
-bdos_call:              equ 0x0005
-bdos_conout:            equ 0x02
-bdos_conio:             equ 0x06
-bdos_const:             equ 0x0b
-bdos_fopen:             equ 0x0f
-bdos_fclose:            equ 0x10
-bdos_fread:             equ 0x14
-bdos_fdelete:           equ 0x13
-bdos_fwrite:            equ 0x15
-bdos_fmake:             equ 0x16
-bdos_setdma:            equ 0x1a
-bdos_gsuid:             equ 0x20
+bdos_call   equ 0x0005
+bdos_conout equ 0x02
+bdos_conio  equ 0x06
+bdos_const  equ 0x0b
+bdos_fopen  equ 0x0f
+bdos_fclose equ 0x10
+bdos_fread  equ 0x14
+bdos_fdelete    equ 0x13
+bdos_fwrite equ 0x15
+bdos_fmake  equ 0x16
+bdos_setdma equ 0x1a
+bdos_gsuid  equ 0x20
 
-fcb:                    equ 0x5c
-fblk_c:                 db 0x00         ; 8bit counter of 128byte blocks
-p_flast:                dw 0x0000       ; ptr to last byte of memory
-p_fcur:                 dw 0x0000       ; ptr to current byte in file
-fcount:                 db 0x80         ; number of bytes to read or write
-frec:                   ds 0x80         ; 128 byte internal buffer for file io
+fcb     equ     0x5c
+fblk_c: db      0x00                    ; 8bit counter of 128byte blocks
+p_flast:
+        dw      0x0000                  ; ptr to last byte of memory
+p_fcur: dw      0x0000                  ; ptr to current byte in file
+fcount: db      0x80                    ; number of bytes to read or write
+frec:   ds      0x80                    ; 128 byte internal buffer for file io
 
 
-public  getk, puts
+        public  getk, puts
+        public  make, open, close
 
-section LIB
+        section LIB
 ;===============================================================================
 ; CP/M Get Key press
 ; INPUT: void
@@ -29,10 +31,11 @@ section LIB
 ; CLOBBERS: BC, DE
 ;===============================================================================
 getk:
-        ld      c,bdos_conio
-        ld      de,0xff
+        ld      c, bdos_conio
+        ld      de, 0xff
         call    bdos_call
         ret
+
 ;===============================================================================
 ; CP/M Write char
 ; INPUT: ascii value to write in A
@@ -40,8 +43,106 @@ getk:
 ; CLOBBERS: BC, DE
 ;===============================================================================
 puts:
-        ld      e,a
-        ld      c,bdos_conout
+        ld      e, a
+        ld      c, bdos_conout
         call    bdos_call
+        ret
+
+;===============================================================================
+; CP/M Create file.
+; INPUT: A  = Drive and user area.  Default is 0 meaning current drive + user
+;        DE = Pointer to FCB
+;        HL = Pointer to null terminated filename. First 11 bytes are used.
+; OUTPUT: void
+; CLOBBERS: ALL
+;===============================================================================
+make:
+        call    empty_fcb
+        ld      (de),a          ; save drive / user area into passed in fcb
+        call    copy_name_to_fcb
+
+        ld      de,fcb
+        ld      c,bdos_fmake
+        call    bdos_call
+        ret
+
+;===============================================================================
+; CP/M Open file
+; INPUT: A  = Drive and user area.  Default is 0 meaning current drive + user
+;        DE = Pointer to FCB
+;        HL = Pointer to null terminated filename. First 11 bytes are used.
+; OUTPUT: void
+; CLOBBERS: AF, DE, HL
+;===============================================================================
+open:
+        call    empty_fcb
+        ld      (de),a
+        call    copy_name_to_fcb
+
+        ld      de,fcb
+        ld      c,bdos_fopen
+        call    bdos_call
+        ret
+
+;===============================================================================
+; CP/M Close file
+; INPUT: DE = Pointer to FCB
+; OUTPUT: void
+; CLOBBERS: AF, DE, HL
+;===============================================================================
+close:
+        ld      c,bdos_fclose
+        call    bdos_call
+        ret
+
+;===============================================================================
+; Local / non exported routines
+;===============================================================================
+
+; Empties an FCB pointed to by DE
+empty_fcb:
+        push    af
+        push    bc
+        push    de
+        push    hl
+
+        xor     a
+        ld      bc, 36
+        ld      de, fcb
+empty_fcb_lp:
+        ld      (de), a
+        inc     de 
+        djnz    empty_fcb_lp
+
+        pop     hl
+        pop     de
+        pop     bc
+        pop     af
+        ret
+
+; Copies the name pointed to by HL to the FCB stopping at 11 bytes
+copy_name_to_fcb:
+        push    af
+        push    bc
+        push    de
+        push    hl
+
+        ld      de, fcb+1
+        ld      b, 11
+copy_name_to_fcb_lp:
+        ld      a, (hl)
+        or      a
+        jr      z, copy_name_to_fcb_exit
+        ld      (de), a
+        inc     hl
+        inc     de
+        dec     b
+        or      b
+        jr      nz, copy_name_to_fcb_lp
+copy_name_to_fcb_exit:
+        pop     hl
+        pop     de
+        pop     bc
+        pop     af
         ret
 

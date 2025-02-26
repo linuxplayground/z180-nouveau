@@ -1,5 +1,6 @@
 INCLUDE "tms.inc"
 INCLUDE "nouveau.inc"
+INCLUDE "tms_constants.inc"
 
 BDOS:           equ 5
 
@@ -22,6 +23,8 @@ vb_loop:
 
 
         call    tms_init_g2
+        ld      c,tms_black
+        call    tms_set_backdrop_color
 
         ; set vram write address to zero
         ld      de,0
@@ -40,26 +43,26 @@ vb_loop:
 
 ; READ WHOLE FILE
 readfile:
-        ld      c,F_READ
-        ld      de,FCB
-        call    BDOS
-        ; was it the end of file
-        or      a
-        jp      nz,eofile
-        ; get DE from the stack
-        pop     de
-        ; add 128
-        add     de,0x80
-        ; save back to stack
+        ld      de,BUFFER
+readfile_lp:
         push    de
-        ; set new DMA
         ld      c,F_DMAOFF
         call    BDOS
-        ; loop
-        jp      readfile
-eofile:
-        pop     de              ; stack is all good now
 
+        ld      de,FCB
+        ld      c,F_READ
+        call    BDOS
+        pop     de
+
+        or      a               ; check for error, assume EOF
+        jr      nz,eofile
+
+        ld      hl,0x80
+        add     hl,de
+        ex      de,hl
+        jr      readfile_lp
+
+eofile:
         ; write to vram
         ld      de,0
         ld      hl,BUFFER + 7

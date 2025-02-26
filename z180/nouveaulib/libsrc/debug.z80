@@ -1,7 +1,7 @@
-public hexdump_a
+        public  hexdump_a
 
-INCLUDE "stdio.inc"
-section LIB
+        INCLUDE "stdio.inc"
+        section LIB
 
 ;===============================================================================
 ; Print out the contents of the A register in HEX
@@ -20,7 +20,7 @@ hexdump_a:
         push    af
         and     0x0f
         call    hexdump_nib
-        ld      a,':'
+        ld      a, ':'
         call    puts
         pop     af
         ret
@@ -28,7 +28,7 @@ hexdump_a:
 hexdump_nib:
         add     '0'
         cp      '9'+1
-        jp      m,hexdump_num
+        jp      m, hexdump_num
         add     'A'-'9'-1
 hexdump_num:
         jp      puts
