@@ -12,7 +12,7 @@ TBFILES= \
 	memory.v \
 	$(LIB_VDP99_FILES) \
 	$(LIB_UTILS_FILES) \
-	$(TOP)/../../2067-dave/color_palette.v\
+	$(TOP)/2067-productiondave/color_palette.v\
 	z80_vdp99.v
 
 

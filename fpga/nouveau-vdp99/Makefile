@@ -42,7 +42,7 @@ prog: top.bin
 top.asc: $(PINMAP)
 
 rom.bin:
-	cp ../../../2063-Z80-cpm/boot/firmware.bin rom.bin
+	cp ../../../../z80-retro/2063-Z80-cpm/boot/firmware.bin rom.bin
 
 %.hex: %.bin
 	hexdump -v -e '/1 "%02x\n"' < $< > $@

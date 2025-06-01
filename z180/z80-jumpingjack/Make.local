@@ -1,0 +1,9 @@
+# TOP must bedeclared before including this file!
+
+BASEDIR = $(TOP)
+Z88DIR = $(TOP)/../../../../z88dk
+
+CFLAGS = +cpm -mz180 -DBIN_TYPE=BIN_CPM --list -compiler=sdcc -create-app -O3 --opt-code-speed
+
+MKDIR = mkdir -pv
+
