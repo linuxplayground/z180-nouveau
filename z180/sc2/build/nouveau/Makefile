@@ -13,12 +13,10 @@ include Make.rules
 all:: $(PROGS)
 
 sc2.com: $(TOP)/src/sc2.z80
-	export ZCCCFG=$(TOP)/../z88dk/lib/config
-	$(TOP)/../z88dk/bin/z80asm $(LIBS) -I$(TOP)/headers -o$@ -mz180  -l -m -s -b $^
+	$(Z80ASM) $(LIBS) -I$(TOP)/headers -o$@ -mz180  -l -m -s -b $^
 
 slide.com: $(TOP)/src/slide.z80
-	export ZCCCFG=$(TOP)/../z88dk/lib/config
-	$(TOP)/../z88dk/bin/z80asm $(LIBS) -I$(TOP)/headers -o$@ -mz180  -l -m -s -b $^
+	$(Z80ASM) $(LIBS) -I$(TOP)/headers -o$@ -mz180  -l -m -s -b $^
 
 
 clean::

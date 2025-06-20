@@ -4,3 +4,7 @@ BASEDIR = $(TOP)
 
 
 MKDIR = mkdir -pv
+
+export ZCCCFG=$(TOP)/../../../z88dk/lib/config
+Z80ASM=$(TOP)/../../../z88dk/bin/z80asm
+
