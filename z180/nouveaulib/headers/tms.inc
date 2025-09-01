@@ -138,6 +138,16 @@ extern tms_load_color_table
 extern tms_load_pattern_table
 
 ;===============================================================================
+; Load sprite pattern table.
+; INPUT: HL = Address of first byte of pattern data, BC = Number of bytes in
+; pattern table.
+; OUTPUT: void
+; CLOBBERS: DE
+;===============================================================================
+extern tms_load_sprite_pattern_table
+
+
+;===============================================================================
 ; Writes all Zeros to VDP nameTable
 ; INPUT: L = value to write, DE = Number of times to write.
 ; OUTPUT: void

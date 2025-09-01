@@ -1,5 +1,9 @@
 ; vim: set ts=8 sw=8 ai:
 
+tms_spriteAttributeTable:  equ 0x1000
+tms_spritePatternTable:    equ 0x0000
+
+
 ; writes all the sprite attribute data to vdp memory
 ; Attribute offsets
 YP:     equ 0
@@ -18,12 +22,11 @@ SP_CRASH:       equ 100
 
 
 flush_sprite_attribute_data:
+        ld      hl,sprite_attribute_table
+        ld      de,tms_spriteAttributeTable
+        ld      bc,sprite_attribute_table_len
+        call    tms_write_slow
         ret
-        ;ld      hl,sprite_attribute_table
-        ;ld      de,tms_spriteAttributeTable
-        ;ld      bc,tms_spriteAttributeTableLen
-        ;call    tms_write_slow
-        ;ret
 
 ; sprite attribute data
 sprite_attribute_table:

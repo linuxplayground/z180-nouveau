@@ -1,3 +1,4 @@
+; vim: set ft=asm:
         INCLUDE "macros.inc"
         INCLUDE "tms.inc"
         INCLUDE "stdio.inc"
@@ -41,7 +42,7 @@ game_loop:
 
         ; FRAME 1/4
         call    draw_gaps
-        ;call    wait
+        ;call    tms_wait
         call    move_jack
         call    flush
         call    flush_sprite_attribute_data
@@ -50,7 +51,7 @@ game_loop:
 
         ; FRAME 2/4
         call    draw_gaps
-        ;call    wait
+        ;call    tms_wait
         call    move_jack
         call    flush
         call    flush_sprite_attribute_data
@@ -59,7 +60,7 @@ game_loop:
 
         ; FRAME 3/4
         call    draw_gaps
-        ;call    wait
+        ;call    tms_wait
         call    move_jack
         call    flush
         call    flush_sprite_attribute_data
@@ -68,7 +69,7 @@ game_loop:
 
         ; FRAME 4/4
         call    draw_gaps
-        ;call    wait
+        ;call    tms_wait
         call    move_jack
         call    flush
         call    flush_sprite_attribute_data
@@ -281,7 +282,7 @@ game_over:
         jp      setup_game
 
 exit_game:
-        call    ay_all_off
+        ;call    ay_all_off
 
         call    tms_wait
         call    tms_flush_buffer
@@ -1034,8 +1035,6 @@ gap_and_update:
         call    set_char_at_loc_buf
         pop     hl      ; restore pointer to gaps
         ret
-
-
 
 ;==============================================================================
 ;       GLOBAL VARIABLES

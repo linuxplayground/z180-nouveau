@@ -1,4 +1,4 @@
-; vim: set ft=z80 :
+; vim: set ft=asm:
 ifndef TMS_CONST_H
 define TMS_CONST_H
 ;===============================================================================
@@ -33,14 +33,14 @@ tms_g1_pattern_table_len:      equ 0x0800
 tms_g1_color_table:            equ 0x2000
 tms_g1_color_table_len:        equ 0x0020
 tms_g1_name_table:             equ 0x1400
-;tms_g1_spriteAttributeTable:  equ 0x1000
-;tms_g1_spritePatternTable:    equ 0x0000
+tms_g1_spriteAttributeTable:  equ 0x1000
+tms_g1_spritePatternTable:    equ 0x0000
 
 tms_g2_pattern_table:          equ 0x0000
 tms_g2_pattern_table_len:      equ 0x1800
 tms_g2_color_table:            equ 0x2000
 tms_g2_color_table_len:        equ 0x1800
 tms_g2_name_table:             equ 0x1800
-;tms_g2_spriteAttributeTable:  equ 0x0000
-;tms_g2_spritePatternTable:    equ 0x0000
+tms_g2_spriteAttributeTable:  equ 0x0000
+tms_g2_spritePatternTable:    equ 0x0000
 endif

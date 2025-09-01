@@ -219,7 +219,7 @@ void play(void) {
             vdp_waitVDPReadyInt();
             vdp_refreshViewPort();
             ticks ++;
-#if 0
+#if 1
             if (ticks % 6 == 0) {  //only take joystick input every 6th tick (every 100ms)
                 if (getJoyStatus() & Joy_Left) {
                     clearTet(x,y,t,f);
@@ -437,7 +437,7 @@ bool menu(void) {
     vdp_refreshViewPort();
 
     while (true) {
-#if 0
+#if 1
         if (getJoyStatus() & Joy_Button) {
             return true;
         }

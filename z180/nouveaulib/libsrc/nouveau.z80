@@ -1,3 +1,4 @@
+; vim: set ft=asm:
         public  io_tmslatch, io_tmsdata
         public  is_key_pressed, joy_status
         public  get_char

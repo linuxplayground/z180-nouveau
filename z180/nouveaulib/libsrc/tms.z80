@@ -1,9 +1,10 @@
+; vim: set ft=asm:
         public  tms_init_g1, tms_init_g2, tms_init_text
         public  tms_set_register, tms_put, tms_set_backdrop_color
         public  tms_set_read_address, tms_set_write_address
         public  tms_write_fast, tms_write_slow
         public  tms_set_all_colors, tms_clear_vram
-        public  tms_load_color_table, tms_load_pattern_table
+        public  tms_load_color_table, tms_load_pattern_table, tms_load_sprite_pattern_table
         public  tms_clear_screen, tms_clear_buffer, tms_flush_buffer
         public  set_char_at_loc_buf, get_char_at_loc_buf
         public  print_at_loc_buf, center_text_in_buf_row
@@ -25,6 +26,7 @@
         extern  io_tmsdata
         extern  str_len
         extern  tms_wait
+        extern  fillmem
 
         section LIB
         INCLUDE "tms_constants.inc"
@@ -83,17 +85,17 @@ tms_init_g1:
 
         ret
         ; clear sprite attribute table and set Y position to D0
-;        ld      b,32
-;        ld      de,tms_spriteAttributeTable
-;        call    tms_set_write_address
-;clear_sprites_loop:
-;        ld      a,0xd0
-;        call    tms_put
-;        xor     a
-;        call    tms_put
-;        call    tms_put
-;        call    tms_put
-;        djnz    clear_sprites_loop
+        ld      b,32
+        ld      de,tms_g1_spriteAttributeTable
+        call    tms_set_write_address
+g1_clear_sprites_loop:
+        ld      a,0xd0
+        call    tms_put
+        xor     a
+        call    tms_put
+        call    tms_put
+        call    tms_put
+        djnz    g1_clear_sprites_loop
         ret
 
 ;===============================================================================
@@ -127,17 +129,17 @@ tms_init_g2:
 
         ret
         ; clear sprite attribute table and set Y position to D0
-;        ld      b,32
-;        ld      de,tms_spriteAttributeTable
-;        call    tms_set_write_address
-;clear_sprites_loop:
-;        ld      a,0xd0
-;        call    tms_put
-;        xor     a
-;        call    tms_put
-;        call    tms_put
-;        call    tms_put
-;        djnz    clear_sprites_loop
+        ld      b,32
+        ld      de,tms_g2_spriteAttributeTable
+        call    tms_set_write_address
+g2_clear_sprites_loop:
+        ld      a,0xd0
+        call    tms_put
+        xor     a
+        call    tms_put
+        call    tms_put
+        call    tms_put
+        djnz    g2_clear_sprites_loop
         ret
 
 
@@ -336,11 +338,10 @@ tms_load_pattern_table:
 ; OUTPUT: void
 ; CLOBBERS: AF, DE
 ;===============================================================================
-;tms_load_sprite_pattern_table:
-;        ret
-;        ld      de,tms_spritePatternTable
-;        call    tms_write_slow
-;        ret
+tms_load_sprite_pattern_table:
+        ld      de,(tms_sprite_pattern_table)
+        call    tms_write_slow
+        ret
 
 ;===============================================================================
 ; Writes all Zeros to VDP nameTable
@@ -361,16 +362,10 @@ tms_clear_screen:
 ; CLOBBERS: AF, BC, DE, HL
 ;===============================================================================
 tms_clear_buffer:
-        ld      bc, 0x0300
-        ld      hl, tms_buffer
-tms_clear_buffer_loop:
-        ld      a, 0x00
-        ld      (hl), a
-        djnz    tms_clear_buffer_loop
-        dec     c
-        or      c
-        jr      nz, tms_clear_buffer_loop
-        ret
+        ld      a,0
+        ld      hl,tms_buffer
+        ld      bc,0x300
+        jp      fillmem
 
 ;===============================================================================
 ; Flush the tms_buffer in system memory to the VDP nameTable after the vsync
@@ -550,7 +545,7 @@ tms_init_g2_registers_length    equ $-tms_init_g2_registers
 ;===============================================================================1
         ds      0x300-(($+0x300)&0x2ff) ; pad out to align tms_buffer on a page
                                         ; boundary.
-; Frame buffer for graphics mode 2
+; Frame buffer for graphics mode 2 (and 1)
 tms_buffer:
         ds      0x300, 0
 
