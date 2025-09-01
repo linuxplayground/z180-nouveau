@@ -163,12 +163,15 @@ void vdp_init(uint8_t mode, uint8_t fgColor, uint8_t bgColor, bool big_sprites, 
   _vdpPatternGeneratorTableAddr = 0x800;
   _vdpPatternNameTableAddr = 0x1400;
   _vdpColorTableAddr = 0x2000;
+  _vdpSpriteAttributeTableAddr = 0x1000;
+  _vdpSpriteGeneratorTableAddr = 0x0000;
+ 
   _vdpCursorMaxX = 31;
   _vdpCursorMaxXFull = 32;
   _vdpTextBufferSize = 768;
   
   vdp_setRegister(0, 0);
-  vdp_setRegister(1, 0xE0);
+  vdp_setRegister(1, 0xE2);
   vdp_setRegister(2, 0x05);
   vdp_setRegister(3, 0x80);
   vdp_setRegister(4, 0x01);
@@ -192,6 +195,10 @@ void vdp_initG1Mode(uint8_t bgColor, bool bigSprites, bool scaleSprites, bool au
   vdp_init(VDP_MODE_G1, 0, bgColor, bigSprites, scaleSprites, autoScroll, splitThirds);
 }
 
+void vdp_initG2Mode(uint8_t bgColor, bool bigSprites, bool scaleSprites, bool autoScroll, bool splitThirds) {
+
+    vdp_init(VDP_MODE_G2, 0, bgColor, bigSprites, scaleSprites, autoScroll, splitThirds);
+  }
 
 void vdp_clearScreen(void) {
 
@@ -302,6 +309,102 @@ void vdp_colorizePattern(uint8_t patternId, uint8_t fg, uint8_t bg) {
   vdp_setWriteAddress(_vdpColorTableAddr + patternId);
   vdp_put(c);
 }
+void vdp_disableSprite(uint8_t id) __z88dk_fastcall {
+
+  uint16_t addr = _vdpSpriteAttributeTableAddr + 4 * id;
+
+  vdp_setWriteAddress(addr);
+  vdp_put(192);        // y
+  vdp_put(0);          // x
+  vdp_put(0);          // pattern name #0 (should always be empty so no false collisions)
+  vdp_put(0b10000000); // early clock to hide behind border
+}
+
+void vdp_loadSpritePatternNameTable(uint16_t numSprites, uint8_t *sprite) {
+
+  for (uint8_t i = 0; i < 32; i++)
+    vdp_disableSprite(i);
+
+  if (_vdpSpriteSizeSelected) {
+
+    vdp_setWriteAddress(_vdpSpriteGeneratorTableAddr);
+
+    uint16_t end = numSprites * 32;
+
+    for (uint16_t i = 0; i < end; i++) 
+      vdp_put(sprite[i]);
+  } else {
+
+    vdp_setWriteAddress(_vdpSpriteGeneratorTableAddr);
+
+    uint16_t end = numSprites * 8;
+    
+    for (uint16_t i = 0; i < end; i++) 
+      vdp_put(sprite[i]);
+  }
+}
+
+uint8_t vdp_spriteInit(uint8_t id, uint8_t spritePatternNameId, uint8_t x, uint8_t y, uint8_t color) {
+
+  uint16_t addr = _vdpSpriteAttributeTableAddr + 4 * id;
+
+  vdp_setWriteAddress(addr);
+  
+  vdp_put(y); // y
+  
+  vdp_put(x); // x
+
+  if (_vdpSpriteSizeSelected)
+    vdp_put(spritePatternNameId * 4); // 16x16 sprite location (name). big sprites take 4 8x8 blocks (datasheet 2-34)
+  else
+    vdp_put(spritePatternNameId);     // 8x8 sprite location (name
+
+  // Set bit 7 to hide the sprite since we're not using it yet
+  vdp_put(color & 0x0f);
+
+  return id;
+}
+
+void vdp_setSpriteColor(uint8_t id, uint8_t color) {
+
+  uint16_t addr = _vdpSpriteAttributeTableAddr + 4 * id;
+
+  vdp_setWriteAddress(addr + 3);
+
+  vdp_put(color & 0x0f);
+}
+
+void vdp_setSpritePosition(uint8_t id, uint8_t x, uint8_t y) {
+
+  uint16_t addr = _vdpSpriteAttributeTableAddr + 4 * id;
+
+  vdp_setWriteAddress(addr);
+  vdp_put(y);
+  vdp_put(x);
+}
+
+void vdp_setSpritePositionAndColor(uint8_t id, uint8_t x, uint8_t y, uint8_t color) {
+
+  uint16_t addr = _vdpSpriteAttributeTableAddr + 4 * id;
+
+  vdp_setWriteAddress(addr);
+  vdp_put(y);
+  vdp_put(x);
+  vdp_put(id);
+  vdp_put(color & 0x0f);
+}
+
+void vdp_getSpritePosition(uint8_t id, uint8_t *xpos, uint8_t *ypos) {
+
+  uint16_t addr = _vdpSpriteAttributeTableAddr + 4 * id;
+
+  vdp_setReadAddress(addr);
+
+  *ypos = IO_VDPDATA;
+
+  *xpos = IO_VDPDATA;
+}
+
 
 void vdp_print(uint8_t *text) __z88dk_fastcall {
 
