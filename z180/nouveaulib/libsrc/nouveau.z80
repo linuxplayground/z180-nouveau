@@ -89,22 +89,20 @@ getJoy0:
 ; Wait for the VDP VSYNC status to appear on the status register
 ; Saves status register value in `tms_status` which is exported by this library
 ; INPUT: void
-; OUTPUT: void
+; OUTPUT: HL=value of tms_status on exit
 ; CLOBBERS: AF, HL
 ;===============================================================================
 tms_wait:
         ld      hl,tms_status     ; set tms_status to 0
-        xor     a
-        ld      (hl),a
+        ld      (hl),0
 
 tms_wait_lp:
         in      a, (io_tmslatch)  ; get the status from the VDP
         or      (hl)              ; or it with tms_status
 
         ld      (hl), a           ; save result back to tms_status
-        and     0x80              ; check if bit 7 is set?
-        jr      z, tms_wait_lp    ; if not set then loop
-        ret
+        jr      m                 ; if not set then loop
+        jr      tms_wait_lp
 
 ;===============================================================================
 ; Stub functions that can't be done on the retro
