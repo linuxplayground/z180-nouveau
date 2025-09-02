@@ -1,6 +1,6 @@
 ; vim: set ft=asm:
         public  io_tmslatch, io_tmsdata
-        public  is_key_pressed, joy_status
+        public  is_key_pressed, joy_status, tms_status
         public  get_char
         public  get_joy_status
         public  tms_wait
@@ -32,6 +32,8 @@ TDR0    equ     0x06
 
 joy_status:
         ds      2
+tms_status:
+        ds      1
 
 ;===============================================================================
 ; Check if a key was pressed
@@ -85,14 +87,23 @@ getJoy0:
 
 ;===============================================================================
 ; Wait for the VDP VSYNC status to appear on the status register
+; Saves status register value in `tms_status` which is exported by this library
 ; INPUT: void
 ; OUTPUT: void
-; CLOBBERS: AF
+; CLOBBERS: AF, HL
 ;===============================================================================
 tms_wait:
-        in      a, (io_tmslatch)
-        and     0x80
-        jr      z, tms_wait
+        ld      hl,tms_status     ; set tms_status to 0
+        xor     a
+        ld      (hl),a
+
+tms_wait_lp:
+        in      a, (io_tmslatch)  ; get the status from the VDP
+        or      (hl)              ; or it with tms_status
+
+        ld      (hl), a           ; save result back to tms_status
+        and     0x80              ; check if bit 7 is set?
+        jr      z, tms_wait_lp    ; if not set then loop
         ret
 
 ;===============================================================================
