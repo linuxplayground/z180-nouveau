@@ -131,8 +131,8 @@ void vdp_setReadAddress(uint16_t address) __z88dk_fastcall {
 
 void vdp_waitVDPReadyInt(void) {
   // Just spin loop until we get a proper way to read vertical blank signal
-    while ((IO_VDPLATCH & 0x80) == 0)
-      ;
+    while ((IO_JOY0 & 0x02) != 0)
+          ;
     vdpStatusRegVal = IO_VDPLATCH;
 }
 
