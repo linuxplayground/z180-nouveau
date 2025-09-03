@@ -102,9 +102,9 @@ game_loop:
         ld      (j_j_fr),a
         jp      game_loop
 input:
-        call    is_key_pressed
+        call    getk
+        or      a
         jp      z,joy_input
-        call    get_char
         cp      0x1b
         jp      z,exit_game
         sub     0x30
