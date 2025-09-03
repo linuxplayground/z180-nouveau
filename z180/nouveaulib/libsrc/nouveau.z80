@@ -101,7 +101,7 @@ tms_wait_lp:
         or      (hl)              ; or it with tms_status
 
         ld      (hl), a           ; save result back to tms_status
-        jr      m                 ; if not set then loop
+        ret     m                 ; if not set then loop
         jr      tms_wait_lp
 
 ;===============================================================================
