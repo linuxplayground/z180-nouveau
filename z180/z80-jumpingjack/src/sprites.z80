@@ -31,7 +31,7 @@ flush_sprite_attribute_data:
 ; sprite attribute data
 sprite_attribute_table:
 jack:
-        db      192-16          ; vertical position.   0=top
+        db      191-16          ; vertical position.   0=top
         db      120             ; horizontal position. 0=left
         db      4               ; pattern name number
         db      0x01            ; early clock & color

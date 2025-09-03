@@ -41,7 +41,7 @@ setup:
         ld      (stun_ctr),a
         ld      (gap_ctr),a
 
-        ld      a,176
+        ld      a,175
         ld      (jack+YP),a
         ld      a,120
         ld      (jack+XP),a
