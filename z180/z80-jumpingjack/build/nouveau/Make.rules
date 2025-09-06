@@ -1,6 +1,0 @@
-include $(TOP)/Make.default
-
-PLATFORM_DIR=$(TOP)/libnouveau
-
--include $(TOP)/Make.local
-include $(TOP)/Make.rules
